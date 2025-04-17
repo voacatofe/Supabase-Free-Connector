@@ -1,58 +1,78 @@
+import { useState, useEffect } from 'react'
 import { framer, CanvasNode } from "framer-plugin"
-import { useState, useEffect } from "react"
 import "./App.css"
-import * as React from 'react'
 import { SupabaseConfigForm } from './components/SupabaseConfig'
 import type { SupabaseConfig } from './types'
 
 framer.showUI({
-    position: "top right",
-    width: 240,
-    height: 95,
+    position: "center",
+    width: 350,
+    height: 540,
 })
 
-function useSelection() {
-    const [selection, setSelection] = useState<CanvasNode[]>([])
-
-    useEffect(() => {
-        return framer.subscribeToSelection(setSelection)
-    }, [])
-
-    return selection
-}
-
 export function App() {
-    const selection = useSelection()
-    const layer = selection.length === 1 ? "layer" : "layers"
+    const [config, setConfig] = useState<SupabaseConfig | null>(null)
 
-    const handleAddSvg = async () => {
-        await framer.addSVG({
-            svg: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path fill="#999" d="M20 0v8h-8L4 0ZM4 8h8l8 8h-8v8l-8-8Z"/></svg>`,
-            name: "Logo.svg",
-        })
-    }
-
-    const handleConfigSave = (config: SupabaseConfig) => {
-        console.log('Configuração salva:', config)
-        // TODO: Implementar lógica de salvamento e sincronização
+    const handleSaveConfig = (url: string, key: string) => {
+        setConfig({ url, key })
     }
 
     return (
-        <div className="p-4">
-            <h1 className="text-2xl font-bold mb-6">Supabase + Framer Sync</h1>
-            <SupabaseConfigForm onConfigSave={handleConfigSave} />
-            <main>
-                <p>
-                    Welcome! Check out the{" "}
-                    <a href="https://framer.com/developers/plugins/introduction" target="_blank">
-                        Docs
-                    </a>{" "}
-                    to start. You have {selection.length} {layer} selected.
+        <div style={{
+            backgroundColor: 'var(--framer-color-bg)',
+            color: 'var(--framer-color-text)',
+            padding: '20px',
+            height: '100%',
+            overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+        }}>
+            <div style={{ textAlign: 'center' }}>
+                <h1 style={{ 
+                    fontSize: '18px',
+                    fontWeight: 600,
+                    color: 'var(--framer-color-text)',
+                    marginBottom: '8px'
+                }}>
+                    Supabase Free Connect
+                </h1>
+                <p style={{
+                    fontSize: '13px',
+                    color: 'var(--framer-color-text-secondary)'
+                }}>
+                    Configure sua conexão com o Supabase gratuitamente
                 </p>
-                <button className="framer-button-primary" onClick={handleAddSvg}>
-                    Insert Logo
-                </button>
-            </main>
+            </div>
+
+            <SupabaseConfigForm onSaveConfig={handleSaveConfig} />
+
+            {config && (
+                <div style={{
+                    padding: '12px',
+                    backgroundColor: 'var(--framer-color-bg-secondary)',
+                    borderRadius: '4px',
+                    border: '1px solid var(--framer-color-divider)'
+                }}>
+                    <h2 style={{
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        marginBottom: '8px',
+                        color: 'var(--framer-color-text)'
+                    }}>
+                        Configuração Salva
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <p style={{ fontSize: '12px', color: 'var(--framer-color-text-secondary)' }}>
+                            <span style={{ fontWeight: 500 }}>URL:</span> {config.url}
+                        </p>
+                        <p style={{ fontSize: '12px', color: 'var(--framer-color-text-secondary)' }}>
+                            <span style={{ fontWeight: 500 }}>Chave:</span>{' '}
+                            {'*'.repeat(Math.min(config.key.length, 20))}
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

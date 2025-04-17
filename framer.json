@@ -1,8 +1,10 @@
 {
-  "id": "1e11ee",
-  "name": "Supabasefreeconnect",
+  "id": "sufrc7",
+  "name": "Supabase Free Connect",
   "modes": [
-    "canvas"
+    "canvas",
+    "configureManagedCollection",
+    "syncManagedCollection"
   ],
   "icon": "/icon.svg"
 }

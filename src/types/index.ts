@@ -4,17 +4,29 @@ export interface SupabaseConfig {
   key: string
 }
 
+export interface TableInfo {
+  name: string
+  description: string
+}
+
 export interface ConnectionResult {
   success: boolean
   message: string
   error?: string
+  tables?: TableInfo[]
+}
+
+export interface ColumnInfo {
+  name: string
+  type: string
+  is_nullable: boolean
+  is_identity: boolean
 }
 
 // Tipos de mapeamento Supabase -> Framer
 export interface FieldMapping {
-  supabaseField: string
-  framerField: string
-  type: FieldType
+  sourceField: string
+  targetField: string
 }
 
 export type FieldType = 
@@ -27,8 +39,9 @@ export type FieldType =
 
 // Tipos de configuração do plugin
 export interface PluginConfig {
-  supabase: SupabaseConfig
-  tableName?: string
+  supabaseConfig: SupabaseConfig | null
   fieldMappings: FieldMapping[]
-  syncEnabled: boolean
-} 
+}
+
+export * from './supabase'
+export * from './framer' 
