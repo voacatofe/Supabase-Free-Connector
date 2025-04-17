@@ -140,7 +140,7 @@
       "id": 9,
       "title": "Develop Field Mapping Interface",
       "description": "Create the UI for mapping Supabase table fields to Framer CMS fields.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         5,
         6,
