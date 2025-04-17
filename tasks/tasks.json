@@ -73,7 +73,7 @@
       "id": 4,
       "title": "Implement Supabase Connection Module",
       "description": "Create the Supabase connection module to handle authentication and connection to Supabase projects.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         2,
         3
@@ -86,7 +86,7 @@
       "id": 5,
       "title": "Develop Field Mapping Utility",
       "description": "Create utility functions to map between Supabase and Framer data types and field structures.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         3,
         4
@@ -99,7 +99,7 @@
       "id": 6,
       "title": "Create Basic Plugin UI Components",
       "description": "Develop the core UI components for the plugin interface following Framer's design patterns.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         1,
         2,
@@ -113,7 +113,7 @@
       "id": 7,
       "title": "Implement Supabase Configuration UI",
       "description": "Create the UI for Supabase connection configuration with credential input and connection testing.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         4,
         6
@@ -126,7 +126,7 @@
       "id": 8,
       "title": "Implement Table Selection Component",
       "description": "Create a component to list and select tables from the connected Supabase project.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         4,
         6,

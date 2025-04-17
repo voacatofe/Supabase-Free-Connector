@@ -1,6 +1,6 @@
 # Task ID: 8
 # Title: Implement Table Selection Component
-# Status: pending
+# Status: done
 # Dependencies: 4, 6, 7
 # Priority: medium
 # Description: Create a component to list and select tables from the connected Supabase project.

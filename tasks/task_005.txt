@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Develop Field Mapping Utility
-# Status: pending
+# Status: done
 # Dependencies: 3, 4
 # Priority: high
 # Description: Create utility functions to map between Supabase and Framer data types and field structures.

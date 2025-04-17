@@ -6,20 +6,30 @@ export interface SupabaseConfig {
 export interface ColumnInfo {
   name: string
   type: string
+  description?: string
   isNullable: boolean
-  isIdentity: boolean
+  isList?: boolean
 }
 
 export interface TableInfo {
   name: string
-  schema: string
-  rowCount: number
-  size: string
+  description?: string
   columns: ColumnInfo[]
+  schema?: string
+  rowCount?: number
+  size?: string
 }
 
 export interface ConnectionResult {
   success: boolean
   message: string
   tables?: TableInfo[]
+  error?: string
+}
+
+export interface TablePreviewResult {
+  success: boolean
+  data?: any[]
+  message?: string
+  error?: string
 } 

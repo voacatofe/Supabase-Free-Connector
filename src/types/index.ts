@@ -1,29 +1,8 @@
-// Tipos do Supabase
-export interface SupabaseConfig {
-  url: string
-  key: string
-}
+// Exporta os tipos do Supabase e Framer diretamente
+export * from './supabase'
+export * from './framer'
 
-export interface TableInfo {
-  name: string
-  description: string
-}
-
-export interface ConnectionResult {
-  success: boolean
-  message: string
-  error?: string
-  tables?: TableInfo[]
-}
-
-export interface ColumnInfo {
-  name: string
-  type: string
-  is_nullable: boolean
-  is_identity: boolean
-}
-
-// Tipos de mapeamento Supabase -> Framer
+// Tipos adicionais para o plugin
 export interface FieldMapping {
   sourceField: string
   targetField: string
@@ -37,11 +16,7 @@ export type FieldType =
   | 'object'
   | 'array'
 
-// Tipos de configuração do plugin
 export interface PluginConfig {
-  supabaseConfig: SupabaseConfig | null
+  supabaseConfig: import('./supabase').SupabaseConfig | null
   fieldMappings: FieldMapping[]
-}
-
-export * from './supabase'
-export * from './framer' 
+} 

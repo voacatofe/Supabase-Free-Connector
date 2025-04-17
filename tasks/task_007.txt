@@ -1,6 +1,6 @@
 # Task ID: 7
 # Title: Implement Supabase Configuration UI
-# Status: pending
+# Status: done
 # Dependencies: 4, 6
 # Priority: high
 # Description: Create the UI for Supabase connection configuration with credential input and connection testing.
