@@ -3,9 +3,11 @@ import { framer } from "framer-plugin"
 import "./App.css"
 import { SupabaseConfigForm } from './components/SupabaseConfig'
 import { TableSelector } from './components/TableSelector'
+import { FieldMappingInterface } from './components/FieldMappingInterface'
 // Import de funções do Framer
 import { isConfigureMode, isSyncMode, isCanvasMode } from './services/framer'
 import type { SupabaseConfig, TableInfo } from './types'
+import type { FieldMapping } from './types'
 import { getSupabaseConfig, clearSupabaseConfig, testConnection } from './supabase'
 import { quickSyncDataToFramer, SyncResult, formatLastSyncTime } from './utils/sync'
 
@@ -39,6 +41,19 @@ if (isCanvasMode()) {
     // A sincronização será iniciada automaticamente
 }
 
+// Antes do componente App, vamos adicionar uma definição para o estado de fieldMappings
+interface AppState {
+  config: SupabaseConfig | null;
+  tables: TableInfo[];
+  selectedTable: TableInfo | null;
+  isSyncing: boolean;
+  lastSyncResult: SyncResult | null;
+  lastSyncTime: Date | undefined;
+  showResetConfirm: boolean;
+  primaryKeyColumn: string;
+  fieldMappings: FieldMapping[];
+}
+
 export function App() {
     const [config, setConfig] = useState<SupabaseConfig | null>(null)
     const [tables, setTables] = useState<TableInfo[]>([])
@@ -47,6 +62,8 @@ export function App() {
     const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null)
     const [lastSyncTime, setLastSyncTime] = useState<Date | undefined>(undefined)
     const [showResetConfirm, setShowResetConfirm] = useState(false)
+    const [primaryKeyColumn, setPrimaryKeyColumn] = useState<string>('')
+    const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([])
 
     // Carrega as credenciais salvas quando o plugin é aberto
     useEffect(() => {
@@ -98,7 +115,12 @@ export function App() {
         
         try {
             // Usa a nova função de sincronização rápida que não requer mapeamento
-            const result = await quickSyncDataToFramer(config, table);
+            // Passamos a chave primária selecionada junto com a tabela
+            const tableWithPrimaryKey = { 
+                ...table, 
+                primaryKeyColumn: primaryKeyColumn || undefined 
+            };
+            const result = await quickSyncDataToFramer(config, tableWithPrimaryKey);
             setLastSyncResult(result);
             
             if (result.success) {
@@ -136,11 +158,13 @@ export function App() {
         setSelectedTable(null)
         setLastSyncResult(null)
         setLastSyncTime(undefined)
+        setPrimaryKeyColumn('') // Limpa a chave primária selecionada
         setShowResetConfirm(false)
         console.log('Dados limpos com sucesso. Estado atual:', {
             config: null,
             tablesCount: 0,
-            selectedTable: null
+            selectedTable: null,
+            primaryKeyColumn: ''
         });
     }
 
@@ -163,11 +187,89 @@ export function App() {
     const handleSelectTable = (table: TableInfo) => {
         setSelectedTable(table)
         setLastSyncResult(null) // Limpa resultados anteriores ao selecionar nova tabela
+        
+        // Verifica se a tabela tem chave primária definida
+        if (table.primaryKeyColumn) {
+            setPrimaryKeyColumn(table.primaryKeyColumn);
+        } else {
+            // Tenta encontrar uma coluna de ID
+            const idColumn = table.columns.find(col => col.name === 'id');
+            if (idColumn) {
+                setPrimaryKeyColumn('id');
+            } else {
+                setPrimaryKeyColumn(''); // Reseta se não encontrar
+            }
+        }
     }
+    
+    // Função para lidar com a seleção de chave primária
+    const handleSelectPrimaryKey = (columnName: string) => {
+        console.log('Selecionando chave primária:', columnName);
+        setPrimaryKeyColumn(columnName);
+        
+        // Atualiza o objeto da tabela selecionada
+        if (selectedTable) {
+            const updatedTable = {
+                ...selectedTable,
+                primaryKeyColumn: columnName
+            };
+            setSelectedTable(updatedTable);
+            
+            // Atualiza a tabela na lista de tabelas
+            const updatedTables = tables.map(t => 
+                t.name === updatedTable.name ? updatedTable : t
+            );
+            setTables(updatedTables);
+            
+            // Armazena a configuração usando framer.setPluginData
+            // Aqui você pode implementar a persistência da chave primária
+            try {
+                const tableConfigKey = `primaryKey_${selectedTable.name}`;
+                framer.setPluginData(tableConfigKey, columnName);
+                console.log(`Chave primária armazenada para tabela ${selectedTable.name}: ${columnName}`);
+            } catch (error) {
+                console.error('Erro ao armazenar chave primária:', error);
+            }
+        }
+    }
+
+    // Função para carregar a chave primária salva
+    const loadSavedPrimaryKey = async (tableName: string) => {
+        try {
+            const tableConfigKey = `primaryKey_${tableName}`;
+            const savedPrimaryKey = await framer.getPluginData(tableConfigKey);
+            
+            if (savedPrimaryKey) {
+                console.log(`Chave primária carregada para tabela ${tableName}: ${savedPrimaryKey}`);
+                setPrimaryKeyColumn(savedPrimaryKey);
+                return savedPrimaryKey;
+            }
+        } catch (error) {
+            console.error('Erro ao carregar chave primária:', error);
+        }
+        return '';
+    }
+    
+    // Efeito para carregar a chave primária quando a tabela é selecionada
+    useEffect(() => {
+        if (selectedTable) {
+            loadSavedPrimaryKey(selectedTable.name);
+        }
+    }, [selectedTable?.name]);
 
     // Função para sincronizar dados
     const handleSyncData = async () => {
         if (!config || !selectedTable || isSyncing) return;
+        
+        // Verifica se uma chave primária foi selecionada
+        if (!primaryKeyColumn) {
+            setLastSyncResult({
+                success: false,
+                message: 'Selecione uma chave primária antes de sincronizar',
+                error: 'É necessário selecionar uma chave primária para identificar registros'
+            });
+            return;
+        }
         
         return syncTable(selectedTable);
     };
@@ -217,28 +319,71 @@ export function App() {
                         onSelectTable={handleSelectTable}
                         selectedTableName={selectedTable?.name}
                     />
-
+                    
                     {selectedTable && (
                         <div style={{ marginTop: '16px' }}>
+                            {/* Componente de mapeamento de tipos de campo */}
+                            <FieldMappingInterface
+                                columns={selectedTable.columns}
+                                onSaveMapping={(mappings) => {
+                                    console.log('Mapeamentos salvos:', mappings);
+                                    // Armazenar mapeamentos para uso posterior
+                                    setFieldMappings(mappings);
+                                }}
+                                tableName={selectedTable.name}
+                                primaryKeyColumn={primaryKeyColumn}
+                                onPrimaryKeyChange={handleSelectPrimaryKey}
+                                autoSave={true}
+                            />
+                            
                             <button
                                 type="button"
-                                onClick={handleSyncData}
-                                disabled={isSyncing}
+                                onClick={async () => {
+                                    // Salva o mapeamento antes de sincronizar
+                                    const mappingElement = document.querySelector('form[data-field-mapping]');
+                                    if (mappingElement) {
+                                        // Dispara evento de salvar no componente
+                                        const saveEvent = new Event('saveMapping', { bubbles: true });
+                                        mappingElement.dispatchEvent(saveEvent);
+                                    }
+                                    
+                                    // Aguarda um momento para garantir que o mapeamento seja salvo
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+                                    
+                                    // Agora sincroniza os dados
+                                    handleSyncData();
+                                }}
+                                disabled={isSyncing || !primaryKeyColumn}
                                 style={{
                                     width: '100%',
                                     padding: '10px 16px',
                                     fontSize: '14px',
                                     fontWeight: 500,
-                                    backgroundColor: 'var(--framer-color-tint)',
-                                    color: 'white',
+                                    backgroundColor: !primaryKeyColumn 
+                                        ? 'var(--framer-color-divider)' 
+                                        : 'var(--framer-color-tint)',
+                                    color: !primaryKeyColumn 
+                                        ? 'var(--framer-color-text-secondary)' 
+                                        : 'white',
                                     border: 'none',
                                     borderRadius: '4px',
-                                    cursor: isSyncing ? 'not-allowed' : 'pointer',
-                                    opacity: isSyncing ? 0.5 : 1
+                                    cursor: (isSyncing || !primaryKeyColumn) ? 'not-allowed' : 'pointer',
+                                    opacity: isSyncing ? 0.5 : 1,
+                                    marginTop: '16px'
                                 }}
                             >
                                 {isSyncing ? 'Sincronizando...' : 'Sincronizar Dados'}
                             </button>
+                            
+                            {!primaryKeyColumn && (
+                                <p style={{
+                                    fontSize: '12px',
+                                    color: 'var(--framer-color-warn)',
+                                    margin: '8px 0 0 0'
+                                }}>
+                                    Selecione uma chave primária antes de sincronizar
+                                </p>
+                            )}
                         </div>
                     )}
 

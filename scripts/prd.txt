@@ -1,49 +1,58 @@
-# Supabase Free Connector - PRD
+# Supabase Free Connector para Framer - PRD
 
 ## Visão Geral
-O Supabase Free Connector é um plugin que permite aos usuários conectar e gerenciar dados no Supabase de forma gratuita e eficiente. O foco principal é fornecer uma interface simples para inserção de dados, garantindo a segurança e integridade dos dados.
+O Supabase Free Connector é um plugin para o Framer que permite conectar um banco de dados Supabase ao Content Management System (CMS) do Framer, possibilitando a sincronização de dados. O plugin utiliza uma abordagem de sincronização manual ao invés de sincronização em tempo real, devido às limitações inerentes ao ambiente de plugins do Framer.
 
-## Objetivos
-1. Criar uma interface intuitiva para inserção de dados no Supabase
-2. Garantir a segurança das operações de dados
-3. Implementar validação de dados antes da inserção
-4. Fornecer feedback claro sobre o sucesso ou falha das operações
+## Funcionalidades Principais
+1. **Configuração do Plugin:** Armazenamento seguro das credenciais de conexão do Supabase e das configurações específicas do projeto (tabela selecionada, mapeamentos de campo, chave primária).
+2. **Interface de Mapeamento de Campos:** Interface que permite ao usuário selecionar a tabela Supabase, designar uma coluna como identificador único (chave primária) e mapear colunas do Supabase para campos do CMS do Framer.
+3. **Lógica de Sincronização Manual (Upsert):** Processo acionado pelo usuário que busca dados do Supabase, compara-os com os dados existentes no Framer CMS usando a chave primária e atualiza registros existentes ou cria novos.
+4. **Tratamento de Erros:** Mecanismos robustos para detectar, reportar e, quando possível, recuperar de erros durante a configuração e sincronização.
 
 ## Requisitos Funcionais
 
-### Inserção de Dados
-- Implementar função para inserção de dados em tabelas específicas
-- Validar os dados antes da inserção
-- Fornecer feedback sobre o status da operação
-- Permitir inserção de múltiplos registros em batch
-- Implementar tratamento de erros adequado
+### Configuração e Autenticação
+- Armazenar de forma segura a URL e a Chave Anônima (Anon Key) do Supabase usando localStorage
+- Implementar configurações de projeto (tabela, mapeamentos, chave primária) através da API framer.setPluginData()
+- Inicializar cliente Supabase com as credenciais armazenadas
 
-### Segurança
-- Implementar autenticação segura com o Supabase
-- Validar permissões antes de cada operação
-- Proteger dados sensíveis
-- Implementar rate limiting para evitar sobrecarga
+### Interface de Mapeamento de Campos
+- Fornecer seletor para tabela Supabase a sincronizar
+- Permitir designação de uma coluna Supabase como chave primária
+- Implementar interface para mapear colunas Supabase para campos CMS Framer
+- Possibilitar a escolha do tipo de campo Framer (boolean, color, number, string, formattedText, image, file, link, date, enum, etc.)
 
-### Interface do Usuário
-- Criar formulário dinâmico para inserção de dados
-- Exibir mensagens de erro claras e úteis
-- Mostrar indicador de progresso durante operações
-- Implementar validação em tempo real dos campos
+### Sincronização de Dados
+- Implementar recuperação de configurações armazenadas antes da sincronização
+- Obter dados da tabela Supabase configurada com paginação para grandes volumes
+- Buscar itens existentes no CMS Framer para comparação
+- Definir/atualizar campos da coleção Framer conforme mapeamento
+- Transformar dados Supabase para o formato esperado pelo Framer
+- Executar operação de upsert (addItems) no Framer CMS
+- Implementar tratamento opcional para exclusão de itens
+
+### Tratamento de Erros e Feedback
+- Identificar e tratar pontos de falha potenciais (configuração, conectividade, acesso, processamento)
+- Implementar validações de entrada e configuração
+- Fornecer feedback claro ao usuário através de notificações toast
+- Exibir mensagens de erro amigáveis e detalhadas
 
 ## Requisitos Técnicos
-- Utilizar TypeScript para desenvolvimento
-- Implementar testes unitários e de integração
-- Seguir boas práticas de código limpo
-- Documentar todas as funções e APIs
-- Implementar logging para debug
+- Desenvolver em TypeScript
+- Utilizar @supabase/supabase-js para interação com Supabase
+- Implementar modos de plugin Framer (syncManagedCollection e configureManagedCollection)
+- Seguir as convenções da API de plugins Framer para CMS
+- Garantir tratamento correto de tipos de dados durante transformação
 
 ## Limitações
-- Acesso somente para inserção de dados
-- Sem acesso direto às tabelas
-- Operações limitadas por políticas de segurança do Supabase
+- Sincronização manual ao invés de tempo real (limitação da plataforma Framer)
+- Armazenamento limitado para configurações (máximo de 2kB por entrada, 4kB total no projeto)
+- Uso exclusivo da Chave Anônima (nunca usar a Chave de Serviço)
+- Dependência das Políticas de Segurança a Nível de Linha (RLS) do Supabase para segurança de dados
 
 ## Métricas de Sucesso
-- Tempo de resposta < 2 segundos para inserções
-- Taxa de erro < 1%
-- 100% de cobertura de testes
-- Zero vulnerabilidades de segurança 
+- Interface intuitiva para configuração de mapeamento
+- Sincronização correta de dados com diferentes tipos de campo
+- Prevenção de duplicatas através do mecanismo de upsert
+- Feedback claro ao usuário sobre progresso e erros
+- Tratamento robusto de cenários de erro 

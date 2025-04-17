@@ -1,11 +1,11 @@
 # Task ID: 10
-# Title: Implement Basic Data Synchronization
-# Status: done
-# Dependencies: 4, 5, 9
-# Priority: high
-# Description: Create the core functionality to sync data from Supabase to Framer CMS collections.
+# Title: Finalize Plugin Modes and Integration
+# Status: pending
+# Dependencies: 9
+# Priority: low
+# Description: Complete the implementation of required Framer plugin modes and ensure seamless integration. The plugin is already working in development mode, but final optimizations and refinements are still needed.
 # Details:
-Implement utils/sync.ts with functions to fetch data from Supabase based on selected table and field mappings. Create functions to convert Supabase data to Framer CMS format. Implement the Framer CMS collection creation and management using the getManagedCollection API. Add functionality to populate the collection with initial data from Supabase.
+The plugin is currently functional in development mode, but requires finalization and optimization. Complete the implementation of both required plugin modes: syncManagedCollection and configureManagedCollection. Ensure proper integration with Framer's plugin system. Implement configuration persistence between sessions. Add plugin metadata and documentation. Perform final optimization for performance. Ensure the plugin adheres to Framer's size limitations for plugin data storage (2kB per entry, 4kB total).
 
 # Test Strategy:
-Test synchronization with various data sets. Verify that data is correctly fetched from Supabase and properly formatted for Framer CMS. Confirm that collections are created with the correct structure.
+Test both plugin modes in the Framer environment. Verify configuration persistence across sessions. Confirm the plugin works correctly with the Framer CMS. Test with various project sizes to ensure performance and storage limitations are respected.

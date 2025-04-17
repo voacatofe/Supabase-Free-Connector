@@ -1,11 +1,86 @@
 # Task ID: 6
-# Title: Create Basic Plugin UI Components
-# Status: done
-# Dependencies: 1, 2, 3
+# Title: Develop Field Mapping Interface
+# Status: pending
+# Dependencies: 5
 # Priority: medium
-# Description: Develop the core UI components for the plugin interface following Framer's design patterns.
+# Description: Create UI for mapping Supabase columns to Framer CMS fields with type selection.
 # Details:
-Implement the main app.tsx component with a modern, responsive layout using Tailwind CSS. Create basic UI components for the configuration screens including form inputs, buttons, and status indicators. Support both light and dark themes to match Framer's interface. Implement basic navigation between different sections of the plugin.
+Build an interface that allows users to map each Supabase column to a Framer CMS field. Include dropdown selectors for Framer field types (boolean, color, number, string, formattedText, image, file, link, date, enum, etc.). Implement smart defaults based on Supabase column types. Store mapping configuration using framer.setPluginData(). Add validation to ensure all required fields are mapped. Include options to reset or modify existing mappings.
 
 # Test Strategy:
-Manually test UI components in Framer Desktop. Verify responsive behavior and theme compatibility. Ensure all interactive elements provide appropriate feedback.
+Test the mapping interface with various column types. Verify storage and retrieval of mapping configurations. Test validation of required mappings. Confirm type suggestions work correctly based on Supabase column types.
+
+# Subtasks:
+## 1. Create Field Mapping UI Layout and Components [pending]
+### Dependencies: None
+### Description: Build the basic UI layout for the field mapping interface with all necessary components including tables, dropdowns, and buttons.
+### Details:
+Implementation steps:
+1. Create a container component for the mapping interface
+2. Design a table-like layout with rows for each Supabase column
+3. Implement column headers (Supabase Column, Framer Field Type, etc.)
+4. Create dropdown component for Framer field type selection with all options (boolean, color, number, string, formattedText, image, file, link, date, enum, etc.)
+5. Add action buttons (Save, Reset, Cancel)
+6. Style components according to Framer's design system
+7. Ensure the UI is responsive and scrollable for many fields
+
+Testing approach:
+- Verify all UI components render correctly
+- Check that the layout handles different screen sizes
+- Ensure dropdowns contain all required field types
+
+## 2. Implement Smart Default Type Mapping Logic [pending]
+### Dependencies: 6.1
+### Description: Create logic to analyze Supabase column types and suggest appropriate default Framer field types.
+### Details:
+Implementation steps:
+1. Create a mapping function that takes a Supabase column type and returns a suggested Framer field type
+2. Handle all common Supabase types: text → string, boolean → boolean, int/float → number, json → formattedText, timestamp → date, etc.
+3. Add special case handling for column names that suggest specific types (e.g., columns with 'image', 'url', 'link', 'color' in the name)
+4. Implement function to pre-populate the mapping interface with these smart defaults
+5. Allow overriding of defaults via the dropdown selectors
+
+Testing approach:
+- Unit test the mapping function with various Supabase column types
+- Verify that special case detection works correctly
+- Test with real database schema examples
+
+## 3. Implement Mapping Configuration Storage [pending]
+### Dependencies: 6.1, 6.2
+### Description: Create functionality to save, load, and reset field mapping configurations using Framer's plugin data storage.
+### Details:
+Implementation steps:
+1. Define a data structure for storing mapping configurations
+2. Implement save functionality using framer.setPluginData() to store the current mapping
+3. Create a function to load existing mappings using framer.getPluginData()
+4. Implement reset functionality to clear mappings or revert to defaults
+5. Add logic to detect if a mapping already exists when the interface loads
+6. Create functions to modify existing mappings
+7. Implement auto-save functionality for mapping changes
+
+Testing approach:
+- Verify mappings are correctly saved and retrieved
+- Test the reset functionality works as expected
+- Check that existing mappings are properly loaded
+- Ensure modifications to mappings are properly persisted
+
+## 4. Add Validation and Finalize Interface [pending]
+### Dependencies: 6.1, 6.2, 6.3
+### Description: Implement validation logic to ensure all required fields are properly mapped and finalize the interface with error handling.
+### Details:
+Implementation steps:
+1. Create validation rules for mapping configurations (e.g., required fields must be mapped)
+2. Implement visual indicators for validation errors (e.g., highlighting invalid mappings)
+3. Add validation checks before saving configurations
+4. Create helpful error messages for invalid mappings
+5. Implement a confirmation dialog when overwriting existing mappings
+6. Add tooltips or help text explaining field type options
+7. Implement final UI polish and error handling
+8. Add loading states during save/load operations
+
+Testing approach:
+- Test validation with various invalid mapping scenarios
+- Verify error messages are clear and helpful
+- Test the complete workflow from creating to modifying mappings
+- Ensure the interface handles edge cases gracefully (e.g., very long field names, many fields)
+

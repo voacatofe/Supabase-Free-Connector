@@ -48,9 +48,24 @@ declare module 'framer-plugin' {
   }
 }
 
+// Tipos de campo suportados pelo Framer
+export type FieldType = 
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'date'
+  | 'color'
+  | 'formattedText'
+  | 'image'
+  | 'file'
+  | 'link'
+  | 'enum'
+  | 'collectionReference'
+  | 'multiCollectionReference';
+
 // Interface para mapeamento de campo para uso no sistema
 export interface FieldMapping {
   supabaseField: string;
   framerField: string;
-  type: string;
+  type: FieldType;
 } 

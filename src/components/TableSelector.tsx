@@ -11,7 +11,6 @@ interface TableSelectorProps {
 
 export function TableSelector({ tables, config, onSelectTable, selectedTableName }: TableSelectorProps) {
   const [selectedTable, setSelectedTable] = useState<TableInfo | null>(null)
-  const [showDetails, setShowDetails] = useState(false)
   const initialSelectionMade = useRef(false)
 
   // Log inicial para depuração
@@ -69,44 +68,6 @@ export function TableSelector({ tables, config, onSelectTable, selectedTableName
       onSelectTable(selectedTable);
     }
   }, [selectedTable, onSelectTable, selectedTableName]);
-
-  // Formata o nome do tipo da coluna para exibição
-  const formatColumnType = (type: string) => {
-    switch (type) {
-      case 'integer':
-      case 'number':
-      case 'Int':
-        return 'Número inteiro'
-      case 'float':
-      case 'Float':
-      case 'double':
-      case 'decimal':
-        return 'Número decimal'
-      case 'string':
-      case 'String':
-      case 'text':
-        return 'Texto'
-      case 'boolean':
-      case 'Boolean':
-        return 'Booleano'
-      case 'datetime':
-      case 'DateTime':
-      case 'timestamp':
-      case 'date':
-        return 'Data e hora'
-      case 'object':
-        return 'Objeto'
-      case 'array':
-        return 'Lista'
-      default:
-        return type
-    }
-  }
-
-  // Alterna a exibição dos detalhes da tabela
-  const toggleDetails = () => {
-    setShowDetails(!showDetails)
-  }
 
   // Se não houver tabelas disponíveis, mostrar mensagem
   if (tables.length === 0) {
@@ -166,88 +127,6 @@ export function TableSelector({ tables, config, onSelectTable, selectedTableName
           ))}
         </select>
       </div>
-
-      {selectedTable && (
-        <div>
-          <button
-            type="button"
-            onClick={toggleDetails}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              padding: '8px 16px',
-              fontSize: '13px',
-              fontWeight: 500,
-              backgroundColor: 'var(--framer-color-bg-secondary)',
-              border: '1px solid var(--framer-color-divider)',
-              borderRadius: '4px',
-              color: 'var(--framer-color-text)',
-              cursor: 'pointer',
-              marginBottom: '12px'
-            }}
-          >
-            {showDetails ? 'Esconder detalhes' : 'Mostrar detalhes da tabela'}
-          </button>
-
-          {showDetails && (
-            <div
-              style={{
-                padding: '12px',
-                backgroundColor: 'var(--framer-color-bg-secondary)',
-                borderRadius: '4px',
-                border: '1px solid var(--framer-color-divider)',
-                marginBottom: '16px'
-              }}
-            >
-              <h3 style={{ fontSize: '14px', fontWeight: 500, margin: '0 0 8px 0' }}>
-                Estrutura da tabela: {formatTableName(selectedTable.name)}
-              </h3>
-              
-              {selectedTable.description && (
-                <p style={{ fontSize: '13px', color: 'var(--framer-color-text-secondary)', margin: '0 0 12px 0' }}>
-                  {selectedTable.description}
-                </p>
-              )}
-
-              {selectedTable.columns && selectedTable.columns.length > 0 ? (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                    <thead>
-                      <tr>
-                        <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--framer-color-divider)' }}>Coluna</th>
-                        <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--framer-color-divider)' }}>Tipo</th>
-                        <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid var(--framer-color-divider)' }}>Obrigatório</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedTable.columns.map(column => (
-                        <tr key={column.name}>
-                          <td style={{ padding: '4px 8px', borderBottom: '1px solid var(--framer-color-divider)', fontWeight: column.name === 'id' ? 'bold' : 'normal' }}>
-                            {column.name}
-                          </td>
-                          <td style={{ padding: '4px 8px', borderBottom: '1px solid var(--framer-color-divider)' }}>
-                            {formatColumnType(column.type)}
-                            {column.isList && ' (Lista)'}
-                          </td>
-                          <td style={{ padding: '4px 8px', borderBottom: '1px solid var(--framer-color-divider)' }}>
-                            {!column.isNullable ? 'Sim' : 'Não'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p style={{ fontSize: '13px', color: 'var(--framer-color-text-secondary)' }}>
-                  Não foi possível obter a estrutura desta tabela.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 } 

@@ -18,6 +18,7 @@ export interface TableInfo {
   schema?: string
   rowCount?: number
   size?: string
+  primaryKeyColumn?: string
 }
 
 export interface ConnectionResult {

@@ -1,11 +1,11 @@
 # Task ID: 7
-# Title: Implement Supabase Configuration UI
-# Status: done
-# Dependencies: 4, 6
-# Priority: high
-# Description: Create the UI for Supabase connection configuration with credential input and connection testing.
+# Title: Implement Data Transformation Logic
+# Status: pending
+# Dependencies: 6
+# Priority: medium
+# Description: Create utilities to transform Supabase data to Framer CMS format based on field mappings.
 # Details:
-Develop a form interface for entering Supabase project URL and anon key. Add validation for input fields with appropriate error messages. Implement a 'Test Connection' button that provides visual feedback on connection status. Create a secure storage mechanism for saving valid credentials. Add UI for clearing saved credentials if needed.
+Develop transformation functions that convert Supabase data types to Framer CMS compatible formats according to the user-defined mappings. Handle special cases like dates, JSON objects, and arrays. Implement type checking and validation to ensure data integrity. Create fallback mechanisms for handling null or undefined values. Support all Framer field types mentioned in the requirements.
 
 # Test Strategy:
-Test the form with valid and invalid inputs. Verify connection testing works correctly. Confirm credentials are saved and can be retrieved when the plugin is reopened.
+Test transformation with various data types and edge cases. Verify correct handling of null/undefined values. Test with large datasets to ensure performance. Confirm all Framer field types are properly supported.

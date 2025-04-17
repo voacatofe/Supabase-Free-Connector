@@ -1,8 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { TableInfo, SupabaseConfig } from '../types/supabase';
 import { FieldMapping } from '../types/framer';
 import { previewFieldValue, convertRecord } from './fieldMapper';
 import { framer } from '../services/framer';
+import { ColumnInfo, FieldType } from '../types';
 
 // Interface para o resultado da sincronização
 export interface SyncResult {
@@ -225,11 +226,145 @@ export function transformData(
   }
   
   try {
-    // Converte para o formato necessário para a função convertRecord
-    const fieldMappings = convertFieldMappings(mappings);
-    
-    // Aplica a conversão para cada registro
-    return data.map(record => convertRecord(record, fieldMappings as any));
+    // Cria um objeto de resultado onde cada item corresponde a um registro
+    return data.map(record => {
+      const result: Record<string, any> = {};
+      
+      // Processa cada campo de acordo com o mapeamento
+      mappings.forEach(mapping => {
+        const sourceField = mapping.supabaseField;
+        const targetField = mapping.framerField;
+        const targetType = mapping.type;
+        const value = record[sourceField];
+        
+        // Converte o valor baseado no tipo de destino
+        let convertedValue = value;
+        
+        switch (targetType) {
+          case 'string':
+            convertedValue = value !== null && value !== undefined ? String(value) : '';
+            break;
+            
+          case 'number':
+            if (value === null || value === undefined) {
+              convertedValue = 0;
+            } else {
+              const num = Number(value);
+              convertedValue = isNaN(num) ? 0 : num;
+            }
+            break;
+            
+          case 'boolean':
+            convertedValue = Boolean(value);
+            break;
+            
+          case 'date':
+            if (!value) {
+              convertedValue = null;
+            } else {
+              try {
+                // O Framer espera data em formato ISO string
+                const date = value instanceof Date ? value : new Date(value);
+                convertedValue = !isNaN(date.getTime()) ? date.toISOString() : null;
+              } catch (e) {
+                console.warn(`Erro ao converter data: ${e}`);
+                convertedValue = null;
+              }
+            }
+            break;
+            
+          case 'color':
+            // Garantir que a cor esteja em um formato reconhecido
+            if (typeof value === 'string') {
+              // Verifica se é um código de cor válido
+              if (/^#([0-9A-F]{3}|[0-9A-F]{6})$/i.test(value) || 
+                  /^rgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)$/.test(value)) {
+                convertedValue = value;
+              } else {
+                // Se não for um formato reconhecido, usa preto como padrão
+                convertedValue = '#000000';
+              }
+            } else {
+              convertedValue = '#000000';
+            }
+            break;
+            
+          case 'image':
+            // O Framer espera um objeto com URL para imagens
+            if (typeof value === 'string') {
+              convertedValue = { url: value };
+            } else if (value && typeof value === 'object' && value.url) {
+              convertedValue = value;
+            } else {
+              convertedValue = null;
+            }
+            break;
+            
+          case 'file':
+            // Similar a imagens, arquivos também são objetos com URL
+            if (typeof value === 'string') {
+              convertedValue = { url: value, name: value.split('/').pop() || 'arquivo' };
+            } else if (value && typeof value === 'object' && value.url) {
+              convertedValue = value;
+            } else {
+              convertedValue = null;
+            }
+            break;
+            
+          case 'link':
+            // Links são URLs em formato string
+            convertedValue = value !== null && value !== undefined ? String(value) : '';
+            break;
+            
+          case 'formattedText':
+            // Texto formatado é HTML em string
+            convertedValue = value !== null && value !== undefined ? String(value) : '';
+            break;
+            
+          case 'enum':
+            // Enums são strings que representam uma das opções configuradas
+            convertedValue = value !== null && value !== undefined ? String(value) : '';
+            break;
+            
+          case 'collectionReference':
+            // Referências são IDs de itens em outras coleções
+            if (value === null || value === undefined) {
+              convertedValue = null;
+            } else if (typeof value === 'object' && (value.id || value._id)) {
+              convertedValue = String(value.id || value._id);
+            } else {
+              convertedValue = String(value);
+            }
+            break;
+            
+          case 'multiCollectionReference':
+            // Múltiplas referências são arrays de IDs
+            if (value === null || value === undefined) {
+              convertedValue = [];
+            } else if (Array.isArray(value)) {
+              convertedValue = value.map(item => {
+                if (typeof item === 'object' && (item.id || item._id)) {
+                  return String(item.id || item._id);
+                }
+                return String(item);
+              });
+            } else {
+              // Se não for um array, criamos um com o valor único
+              convertedValue = [String(value)];
+            }
+            break;
+            
+          default:
+            // Tipo não reconhecido, mantém o valor original
+            convertedValue = value;
+        }
+        
+        // Adiciona o campo convertido ao resultado
+        result[targetField] = convertedValue;
+      });
+      
+      return result;
+    });
   } catch (error) {
     console.error('Erro ao transformar dados:', error);
     return [];
@@ -330,6 +465,9 @@ export async function createOrUpdateFramerData(
       const fields: Array<{ id: string; name: string; type: string }> = [];
       
       for (const key of Object.keys(sampleItem)) {
+        // Pula os campos especiais de ID que adicionamos
+        if (key === '_id' || key === 'id') continue;
+        
         const value = sampleItem[key];
         const fieldType = getFramerFieldType(value);
         // Use o campo existente se já estiver definido com o mesmo nome
@@ -343,7 +481,7 @@ export async function createOrUpdateFramerData(
           fields.push({
             id: `field_${key.replace(/[^a-zA-Z0-9]/g, '_')}`,
             name: key,
-            type: 'string'
+            type: fieldType
           });
         }
       }
@@ -356,12 +494,23 @@ export async function createOrUpdateFramerData(
       await collection.setFields(fields as any);
     }
     
+    // Para rastrear quais itens foram obtidos e serão atualizados
+    console.log('Preparando para atualizar ou criar itens...');
+    // Nota: Em uma implementação ideal, buscaríamos os itens existentes para
+    // compará-los e fazer upsert, mas como a API atual não suporta esse cenário,
+    // vamos confiar no mecanismo interno do Framer para fazer o upsert
+    // baseado no campo "id" que estamos fornecendo
+
+    // Map vazio como fallback
+    const existingItemsMap = new Map();
+    
     // Prepara os itens para adicionar à coleção
     const collectionItems = data.map(item => {
-      // Gera um ID determinístico para o item baseado em alguma propriedade única
-      // (idealmente usando um campo como 'id' do objeto original)
+      // Usa o ID já definido (baseado na chave primária)
       const itemId = item.id || `item_${Math.random().toString(36).substring(2, 15)}`;
-      const slug = item.slug || slugify(item.title || itemId);
+      
+      // Define um slug para o item
+      const slug = item.slug || slugify(item.title || item.name || itemId);
       
       // Constrói o objeto de dados do campo
       const fieldData: Record<string, any> = {};
@@ -370,6 +519,9 @@ export async function createOrUpdateFramerData(
       const fieldTypes = new Map(configuredFields.map(field => [field.id, field.type]));
       
       Object.keys(item).forEach(key => {
+        // Pula os campos especiais de ID
+        if (key === '_id' || key === 'id' || key === 'slug') return;
+        
         // Usa o mesmo padrão de ID que usamos ao definir os campos
         const fieldId = `field_${key.replace(/[^a-zA-Z0-9]/g, '_')}`;
         const value = item[key];
@@ -379,38 +531,40 @@ export async function createOrUpdateFramerData(
         // Encapsula o valor conforme o tipo do campo
         switch (fieldType) {
           case 'string':
-            fieldData[fieldId] = { type: 'string', value: String(value) };
+            fieldData[fieldId] = String(value);
             break;
           case 'number':
-            fieldData[fieldId] = { type: 'number', value: Number(value) };
+            fieldData[fieldId] = Number(value);
             break;
           case 'boolean':
-            fieldData[fieldId] = { type: 'boolean', value: Boolean(value) };
+            fieldData[fieldId] = Boolean(value);
             break;
           case 'date':
-            fieldData[fieldId] = { 
-              type: 'date', 
-              value: value instanceof Date ? value.toISOString() : new Date(value).toISOString() 
-            };
+            fieldData[fieldId] = value instanceof Date ? value.toISOString() : String(value);
             break;
           case 'image':
             // Para URLs de imagem
-            fieldData[fieldId] = { type: 'image', value: { url: String(value) } };
+            fieldData[fieldId] = { url: String(value) };
             break;
           default:
             // Fallback para string para outros tipos
-            fieldData[fieldId] = { type: 'string', value: String(value) };
+            fieldData[fieldId] = String(value);
         }
       });
+      
+      // Verifica se o item já existe na coleção
+      const isUpdate = existingItemsMap.has(itemId);
+      console.log(`Item ${itemId} será ${isUpdate ? 'atualizado' : 'criado'}`);
       
       return {
         id: itemId,
         slug: slug,
+        title: item.title || item.name || String(itemId), // Use um campo significativo como título
         fieldData: fieldData
       };
     });
     
-    // Adiciona os itens à coleção
+    // Adiciona os itens à coleção (o Framer fará upsert automaticamente)
     await collection.addItems(collectionItems as any);
     
     return {
@@ -499,8 +653,24 @@ function getFramerFieldType(value: any): string {
         return 'date';
       }
       // Verifica se a string é uma URL de imagem
-      if (/\.(jpeg|jpg|gif|png|webp)$/i.test(value)) {
+      if (/\.(jpeg|jpg|gif|png|webp|svg)$/i.test(value) || value.startsWith('data:image/')) {
         return 'image';
+      }
+      // Verifica se é uma cor em formato hexadecimal ou RGB
+      if (/^#([0-9A-F]{3}|[0-9A-F]{6})$/i.test(value) || /^rgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)$/.test(value)) {
+        return 'color';
+      }
+      // Verifica se é uma URL
+      if (/^(http|https):\/\/[^ "]+$/.test(value)) {
+        return 'link';
+      }
+      // Verifica se parece HTML formatado
+      if (/<\/?[a-z][\s\S]*>/i.test(value)) {
+        return 'formattedText';
+      }
+      // Verifica se é um arquivo
+      if (/\.(pdf|doc|docx|xls|xlsx|txt|csv|zip|rar)$/i.test(value)) {
+        return 'file';
       }
       return 'string';
     case 'number':
@@ -512,7 +682,14 @@ function getFramerFieldType(value: any): string {
         return 'date';
       }
       if (Array.isArray(value)) {
-        return 'string'; // Framer não tem tipo array, então convertemos para string
+        if (value.length > 0 && typeof value[0] === 'string' && value[0].includes('id')) {
+          return 'multiCollectionReference';
+        }
+        return 'string'; // Convertemos arrays para string por padrão
+      }
+      // Se o objeto tem um campo id, pode ser uma referência
+      if (value.id || value._id || value.ref_id) {
+        return 'collectionReference';
       }
       return 'string'; // Objetos complexos são convertidos para string
     default:
@@ -581,7 +758,7 @@ export async function syncDataToFramer(
 
 /**
  * Executa uma sincronização rápida e automática do Supabase para o Framer
- * Não requer mapeamento manual de campos
+ * Não requer mapeamento manual de campos, mas usa a chave primária selecionada
  */
 export async function quickSyncDataToFramer(
   config: SupabaseConfig,
@@ -589,6 +766,17 @@ export async function quickSyncDataToFramer(
 ): Promise<SyncResult> {
   try {
     console.log('Iniciando sincronização rápida para tabela:', table.name);
+    
+    // Verifica se a chave primária foi definida
+    if (!table.primaryKeyColumn) {
+      return {
+        success: false,
+        message: 'Chave primária não definida',
+        error: 'É necessário definir uma chave primária para sincronizar os dados'
+      };
+    }
+    
+    console.log(`Usando chave primária: ${table.primaryKeyColumn}`);
     
     // Passo 1: Buscar todos os dados do Supabase
     const fetchResult = await fetchAllDataFromSupabase(config, table);
@@ -612,18 +800,54 @@ export async function quickSyncDataToFramer(
     
     console.log(`Dados obtidos: ${fetchResult.data.length} registros`);
     
-    // Passo 2: Transformar os dados com detecção automática de tipos
-    const transformedData = autoTransformData(fetchResult.data);
+    // Passo 2: Gerar mapeamentos automáticos com base nos tipos dos dados
+    const columns = await getTableColumns(config, table.name);
+    const autoMappings = columns.map((column: ColumnInfo) => {
+      // Tenta inferir o tipo Framer baseado no tipo do Supabase e nome da coluna
+      const framerType = inferFramerTypeFromColumn(column);
+      
+      return {
+        supabaseField: column.name,
+        framerField: column.name,
+        type: framerType as FieldType
+      };
+    });
+    
+    // Passo 3: Transformar os dados com os mapeamentos automáticos
+    const transformedData = transformData(fetchResult.data, autoMappings);
     
     console.log('Dados transformados com sucesso');
     
-    // Passo 3: Criar ou atualizar os dados no Framer
+    // Passo 4: Enriquecer os dados com o ID baseado na chave primária
+    const dataWithIds = transformedData.map((item, index) => {
+      // Obtém o valor da chave primária
+      const pkValue = fetchResult.data[index][table.primaryKeyColumn!];
+      
+      if (pkValue === undefined || pkValue === null) {
+        console.warn(`Registro com valor de chave primária nulo ou indefinido: ${JSON.stringify(item)}`);
+      }
+      
+      // Converte para string (o Framer espera que o ID seja string)
+      const id = pkValue !== undefined && pkValue !== null ? String(pkValue) : `auto_${Math.random().toString(36).substring(2, 15)}`;
+      
+      // Gera um slug a partir do título, se existir, ou do ID
+      const title = item.title || item.name || pkValue || id;
+      const slug = slugify(title);
+      
+      return {
+        ...item,
+        _id: id, // Armazenamos o ID original como _id para uso interno
+        id: id   // Usamos o valor da chave primária como ID no Framer
+      };
+    });
+    
+    // Passo 5: Criar ou atualizar os dados no Framer
     const name = createFramerName(table.name);
-    const result = await createOrUpdateFramerData(name, transformedData);
+    const result = await createOrUpdateFramerData(name, dataWithIds);
     
     return {
       ...result,
-      totalRecords: fetchResult.count || transformedData.length
+      totalRecords: fetchResult.count || dataWithIds.length
     };
   } catch (error) {
     console.error('Erro durante sincronização rápida:', error);
@@ -679,4 +903,100 @@ export function formatLastSyncTime(date?: Date): string {
   
   // Formatação padrão para datas mais antigas
   return date.toLocaleString('pt-BR');
+}
+
+/**
+ * Função para inferir o tipo Framer baseado nas informações da coluna
+ */
+function inferFramerTypeFromColumn(column: ColumnInfo): string {
+  const name = column.name.toLowerCase();
+  const type = column.type.toLowerCase();
+  
+  // Inferências baseadas no nome da coluna
+  if (name.includes('color') || name.includes('cor') || 
+      name.endsWith('rgb') || name.endsWith('hex')) {
+    return 'color';
+  }
+  
+  if (name.includes('url') || name.includes('link') || 
+      name.includes('website') || name.includes('site')) {
+    return 'link';
+  }
+  
+  if (name.includes('image') || name.includes('imagem') || 
+      name.includes('photo') || name.includes('foto') || 
+      name.includes('picture') || name.endsWith('img')) {
+    return 'image';
+  }
+  
+  if (name.includes('file') || name.includes('arquivo') || 
+      name.includes('document') || name.includes('documento') || 
+      name.endsWith('pdf') || name.endsWith('doc')) {
+    return 'file';
+  }
+  
+  if (name.includes('html') || name.includes('formatted') || 
+      name.includes('rich_text') || name.includes('rich_content') || 
+      name.includes('texto_formatado')) {
+    return 'formattedText';
+  }
+  
+  if (name.includes('reference') || name.includes('referencia') || 
+      name.includes('ref_') || name.endsWith('_ref') || 
+      name.endsWith('_id')) {
+    return 'collectionReference';
+  }
+  
+  if (name.includes('references') || name.includes('refs') || 
+      name.includes('ids')) {
+    return 'multiCollectionReference';
+  }
+  
+  // Inferências baseadas no tipo PostgreSQL
+  if (type.includes('int') || type.includes('float') || 
+      type.includes('decimal') || type.includes('numeric') ||
+      type.includes('real') || type.includes('double')) {
+    return 'number';
+  }
+  
+  if (type.includes('bool')) {
+    return 'boolean';
+  }
+  
+  if (type.includes('date') || type.includes('time') || 
+      type.includes('timestamp')) {
+    return 'date';
+  }
+  
+  if (type.includes('enum')) {
+    return 'enum';
+  }
+  
+  // Padrão para tudo mais
+  return 'string';
+}
+
+/**
+ * Obtém informações detalhadas sobre as colunas de uma tabela
+ */
+export async function getTableColumns(
+  config: SupabaseConfig,
+  tableName: string
+): Promise<ColumnInfo[]> {
+  const supabase = createClient(config.url, config.key);
+  try {
+    const { data, error } = await supabase.rpc('get_table_columns', {
+      p_table_name: tableName
+    });
+    
+    if (error) {
+      console.error('Erro ao buscar colunas:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Erro ao buscar colunas da tabela:', error);
+    return [];
+  }
 } 

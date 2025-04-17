@@ -1,11 +1,31 @@
 # Task ID: 8
-# Title: Implement Table Selection Component
-# Status: done
-# Dependencies: 4, 6, 7
-# Priority: medium
-# Description: Create a component to list and select tables from the connected Supabase project.
+# Title: Develop Upsert Synchronization Logic
+# Status: pending
+# Dependencies: 7
+# Priority: high
+# Description: Implement the core synchronization mechanism to update or create items in Framer CMS. Basic initial synchronization has been implemented, but differential synchronization for subsequent updates still needs to be developed.
 # Details:
-Implement components/TableSelector.tsx to fetch and display available tables from Supabase. Add search/filter functionality for projects with many tables. Include metadata display (row counts, creation date) if available. Implement selection mechanism and store the selected table for the next steps in the workflow.
+The basic synchronization engine that fetches data from Supabase (with pagination support) and creates items in Framer CMS has been implemented. Now we need to enhance the system with intelligent upsert logic for subsequent synchronizations. This includes comparing existing Framer CMS items using the primary key to determine whether to update or create items. Continue implementing batching for large datasets to avoid performance issues. Add progress tracking for user feedback. Include optional handling for item deletion. Ensure proper error handling during each step of the synchronization process, especially for differential updates.
 
 # Test Strategy:
-Test with Supabase projects containing different numbers of tables. Verify correct display of table information and proper selection behavior.
+Test synchronization with various dataset sizes. Verify correct upsert behavior (updating existing items and creating new ones) during subsequent synchronizations. Test differential synchronization to ensure only changed data is updated. Test pagination with large datasets. Confirm proper handling of errors during synchronization.
+
+# Subtasks:
+## 8.1. Implement differential synchronization logic [pending]
+### Dependencies: None
+### Description: Develop logic to compare existing Framer CMS items with Supabase data to determine what needs to be updated, created, or deleted.
+### Details:
+
+
+## 8.2. Add intelligent upsert operations [pending]
+### Dependencies: None
+### Description: Implement logic to efficiently update only changed fields in existing items rather than replacing entire items.
+### Details:
+
+
+## 8.3. Optimize performance for subsequent synchronizations [pending]
+### Dependencies: None
+### Description: Ensure that subsequent synchronizations are faster by only processing changed data.
+### Details:
+
+
