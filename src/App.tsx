@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
-import { framer, CanvasNode } from "framer-plugin"
+import { framer } from "framer-plugin"
 import "./App.css"
 import { SupabaseConfigForm } from './components/SupabaseConfig'
 import { TableSelector } from './components/TableSelector'
-import { FieldMapper } from './components/FieldMapper'
-import { SyncManager } from './components/SyncManager'
+// Import de funções do Framer
+import { isConfigureMode, isSyncMode, isCanvasMode } from './services/framer'
 import type { SupabaseConfig, TableInfo } from './types'
-import type { FieldMapping } from './types/framer'
 import { getSupabaseConfig, clearSupabaseConfig, testConnection } from './supabase'
+import { quickSyncDataToFramer, SyncResult, formatLastSyncTime } from './utils/sync'
 
 // Declaração para estender a API do Framer com o método createCollection
 declare module "framer-plugin" {
@@ -20,25 +20,39 @@ declare module "framer-plugin" {
     }
 }
 
-framer.showUI({
-    position: "center",
-    width: 500, // Aumentado para acomodar os novos componentes
-    height: 700, // Aumentado para acomodar os novos componentes
-})
+// Configura a UI baseado no modo do Framer
+if (isCanvasMode()) {
+    framer.showUI({
+        position: "center",
+        width: 500, // Aumentado para acomodar os novos componentes
+        height: 700, // Aumentado para acomodar os novos componentes
+    })
+} else if (isConfigureMode()) {
+    // Modo de configuração - mostra UI para configurar o plugin
+    framer.showUI({
+        position: "center",
+        width: 500,
+        height: 700,
+    })
+} else if (isSyncMode()) {
+    // Em modo de sincronização, não mostramos UI inicial
+    // A sincronização será iniciada automaticamente
+}
 
 export function App() {
     const [config, setConfig] = useState<SupabaseConfig | null>(null)
     const [tables, setTables] = useState<TableInfo[]>([])
     const [selectedTable, setSelectedTable] = useState<TableInfo | null>(null)
-    const [isCreatingCollection, setIsCreatingCollection] = useState(false)
-    const [activeTab, setActiveTab] = useState<'tables' | 'mapping' | 'sync'>('tables')
-    const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([])
+    const [isSyncing, setIsSyncing] = useState(false)
+    const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null)
+    const [lastSyncTime, setLastSyncTime] = useState<Date | undefined>(undefined)
     const [showResetConfirm, setShowResetConfirm] = useState(false)
 
     // Carrega as credenciais salvas quando o plugin é aberto
     useEffect(() => {
         console.log('Carregando configurações iniciais...');
         const savedConfig = getSupabaseConfig()
+        
         if (savedConfig) {
             console.log('Configuração encontrada, fazendo teste de conexão inicial');
             setConfig(savedConfig)
@@ -56,6 +70,14 @@ export function App() {
                     if (result.success && result.tables) {
                         setTables(result.tables);
                         console.log(`${result.tables.length} tabelas carregadas no estado inicial`);
+                        
+                        // Se estamos no modo de sincronização, inicie a sincronização automaticamente
+                        if (isSyncMode() && result.tables.length > 0) {
+                            // Tenta sincronizar a primeira tabela disponível
+                            await syncTable(result.tables[0]);
+                            // Fecha o plugin automaticamente após a sincronização
+                            await framer.closePlugin();
+                        }
                     }
                 } catch (error) {
                     console.error('Erro ao testar conexão inicial:', error);
@@ -67,6 +89,36 @@ export function App() {
             console.log('Nenhuma configuração encontrada');
         }
     }, []) // Executa apenas uma vez na montagem do componente
+
+    // Função para sincronizar uma tabela específica
+    const syncTable = async (table: TableInfo) => {
+        if (!config) return;
+        
+        setIsSyncing(true);
+        
+        try {
+            // Usa a nova função de sincronização rápida que não requer mapeamento
+            const result = await quickSyncDataToFramer(config, table);
+            setLastSyncResult(result);
+            
+            if (result.success) {
+                setLastSyncTime(new Date());
+            }
+            
+            return result;
+        } catch (error) {
+            const errorResult: SyncResult = {
+                success: false,
+                message: 'Erro durante a sincronização',
+                error: error instanceof Error ? error.message : 'Erro desconhecido'
+            };
+            
+            setLastSyncResult(errorResult);
+            return errorResult;
+        } finally {
+            setIsSyncing(false);
+        }
+    };
 
     const handleSaveConfig = (url: string, key: string) => {
         setConfig({ url, key })
@@ -82,7 +134,8 @@ export function App() {
         setConfig(null)
         setTables([])
         setSelectedTable(null)
-        setFieldMappings([])
+        setLastSyncResult(null)
+        setLastSyncTime(undefined)
         setShowResetConfirm(false)
         console.log('Dados limpos com sucesso. Estado atual:', {
             config: null,
@@ -109,42 +162,19 @@ export function App() {
 
     const handleSelectTable = (table: TableInfo) => {
         setSelectedTable(table)
-        // Quando seleciona uma nova tabela, limpa os mapeamentos anteriores
-        setFieldMappings([])
+        setLastSyncResult(null) // Limpa resultados anteriores ao selecionar nova tabela
     }
 
-    const handleFieldMappingChange = (mappings: FieldMapping[]) => {
-        setFieldMappings(mappings)
-    }
+    // Função para sincronizar dados
+    const handleSyncData = async () => {
+        if (!config || !selectedTable || isSyncing) return;
+        
+        return syncTable(selectedTable);
+    };
 
-    const handleCreateCollection = async (tableName: string) => {
-        setIsCreatingCollection(true)
-        try {
-            // Remove "Collection" do final do nome, se existir
-            const cleanTableName = tableName.replace(/Collection$/, '');
-            
-            // Cria uma nova collection no Framer usando a API dinâmica
-            // @ts-ignore - O método createCollection existe no runtime mas não está tipado
-            const collection = await framer.createCollection({
-                name: cleanTableName,
-                type: "data",
-                fields: [
-                    { name: "id", type: "string" },
-                    { name: "createdAt", type: "date" },
-                    { name: "updatedAt", type: "date" }
-                ]
-            })
-
-            // Retorna o ID da collection criada
-            alert(`Collection criada com sucesso!`);
-            return collection.id
-        } catch (error) {
-            console.error('Erro ao criar collection:', error)
-            alert(`Erro ao criar collection: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-            throw error
-        } finally {
-            setIsCreatingCollection(false)
-        }
+    // Retorna vazio para o modo de sincronização
+    if (isSyncMode()) {
+        return null;
     }
 
     const renderContent = () => {
@@ -163,13 +193,15 @@ export function App() {
             )
         }
 
-        if (activeTab === 'tables') {
-            console.log('Renderizando aba de tabelas com', tables.length, 'tabelas disponíveis');
-            return (
-                <div style={{
-                    borderTop: '1px solid var(--framer-color-divider)',
-                    paddingTop: '16px'
-                }}>
+        return (
+            <div style={{
+                borderTop: '1px solid var(--framer-color-divider)',
+                paddingTop: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px'
+            }}>
+                <div>
                     <h2 style={{
                         fontSize: '16px',
                         fontWeight: 500,
@@ -187,283 +219,180 @@ export function App() {
                     />
 
                     {selectedTable && (
-                        <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+                        <div style={{ marginTop: '16px' }}>
                             <button
                                 type="button"
-                                onClick={() => handleCreateCollection(selectedTable.name)}
-                                disabled={isCreatingCollection}
-                                className="framer-button-primary"
+                                onClick={handleSyncData}
+                                disabled={isSyncing}
                                 style={{
-                                    flex: 1,
-                                    padding: '8px 16px',
-                                    fontSize: '13px',
-                                    fontWeight: 500,
-                                    cursor: isCreatingCollection ? 'not-allowed' : 'pointer',
-                                    opacity: isCreatingCollection ? 0.5 : 1
-                                }}
-                            >
-                                {isCreatingCollection 
-                                    ? 'Criando collection...' 
-                                    : 'Criar Collection'}
-                            </button>
-                            
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab('mapping')}
-                                style={{
-                                    flex: 1,
-                                    padding: '8px 16px',
-                                    fontSize: '13px',
+                                    width: '100%',
+                                    padding: '10px 16px',
+                                    fontSize: '14px',
                                     fontWeight: 500,
                                     backgroundColor: 'var(--framer-color-tint)',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: '4px',
-                                    cursor: 'pointer'
+                                    cursor: isSyncing ? 'not-allowed' : 'pointer',
+                                    opacity: isSyncing ? 0.5 : 1
                                 }}
                             >
-                                Mapear Campos
+                                {isSyncing ? 'Sincronizando...' : 'Sincronizar Dados'}
                             </button>
                         </div>
                     )}
-                </div>
-            )
-        }
 
-        if (activeTab === 'mapping' && selectedTable) {
-            return (
-                <div>
-                    <FieldMapper 
-                        table={selectedTable}
-                        config={config}
-                        onFieldMappingsChange={handleFieldMappingChange}
-                        initialMappings={fieldMappings}
-                    />
-                    
-                    <div style={{ 
-                        marginTop: '16px', 
-                        display: 'flex', 
-                        gap: '8px' 
+                    {lastSyncResult && (
+                        <div style={{ 
+                            marginTop: '16px',
+                            padding: '12px',
+                            borderRadius: '4px',
+                            backgroundColor: lastSyncResult.success ? 'rgba(0, 128, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)',
+                            border: `1px solid ${lastSyncResult.success ? 'rgba(0, 128, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)'}`,
+                            color: 'var(--framer-color-text)'
+                        }}>
+                            <p style={{ margin: 0, fontWeight: 500 }}>
+                                {lastSyncResult.success ? '✅ ' : '❌ '}
+                                {lastSyncResult.message}
+                            </p>
+                            
+                            {lastSyncResult.success && lastSyncResult.totalRecords !== undefined && (
+                                <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                                    Total de registros: {lastSyncResult.totalRecords}
+                                </p>
+                            )}
+                            
+                            {lastSyncTime && (
+                                <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                                    Última sincronização: {formatLastSyncTime(lastSyncTime)}
+                                </p>
+                            )}
+                            
+                            {!lastSyncResult.success && lastSyncResult.error && (
+                                <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: 'rgba(255, 0, 0, 0.8)' }}>
+                                    Erro: {lastSyncResult.error}
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
+                
+                <div style={{
+                    marginTop: '16px',
+                    display: 'flex',
+                    justifyContent: 'space-between'
+                }}>
+                    <button
+                        type="button"
+                        onClick={handleResetClick}
+                        style={{
+                            padding: '8px 16px',
+                            backgroundColor: 'transparent',
+                            color: 'var(--framer-color-danger)',
+                            border: '1px solid var(--framer-color-danger)',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '14px'
+                        }}
+                    >
+                        Redefinir Conexão
+                    </button>
+                </div>
+                
+                {showResetConfirm && (
+                    <div style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000
                     }}>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('tables')}
-                            style={{
-                                flex: 1,
-                                padding: '8px 16px',
-                                fontSize: '13px',
-                                fontWeight: 500,
-                                backgroundColor: 'var(--framer-color-bg-secondary)',
-                                color: 'var(--framer-color-text)',
-                                border: '1px solid var(--framer-color-divider)',
-                                borderRadius: '4px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Voltar para Tabelas
-                        </button>
-                        
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('sync')}
-                            disabled={fieldMappings.length === 0}
-                            style={{
-                                flex: 1,
-                                padding: '8px 16px',
-                                fontSize: '13px',
-                                fontWeight: 500,
-                                backgroundColor: 'var(--framer-color-tint)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: fieldMappings.length === 0 ? 'not-allowed' : 'pointer',
-                                opacity: fieldMappings.length === 0 ? 0.5 : 1
-                            }}
-                        >
-                            Prosseguir para Sincronização
-                        </button>
+                        <div style={{
+                            backgroundColor: 'white',
+                            padding: '20px',
+                            borderRadius: '8px',
+                            maxWidth: '90%',
+                            width: '400px'
+                        }}>
+                            <h3 style={{
+                                margin: '0 0 16px 0',
+                                color: 'var(--framer-color-text)'
+                            }}>
+                                Confirmar Redefinição
+                            </h3>
+                            
+                            <p style={{
+                                margin: '0 0 20px 0',
+                                color: 'var(--framer-color-text-secondary)'
+                            }}>
+                                Tem certeza de que deseja redefinir a conexão do Supabase? Essa ação não pode ser desfeita.
+                            </p>
+                            
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                gap: '12px'
+                            }}>
+                                <button
+                                    onClick={handleResetCancel}
+                                    style={{
+                                        padding: '8px 16px',
+                                        backgroundColor: 'transparent',
+                                        color: 'var(--framer-color-text)',
+                                        border: '1px solid var(--framer-color-divider)',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Cancelar
+                                </button>
+                                
+                                <button
+                                    onClick={handleResetConfirm}
+                                    style={{
+                                        padding: '8px 16px',
+                                        backgroundColor: 'var(--framer-color-danger)',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Redefinir
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            )
-        }
-
-        if (activeTab === 'sync' && selectedTable && fieldMappings.length > 0) {
-            return (
-                <div>
-                    <SyncManager 
-                        table={selectedTable}
-                        config={config}
-                        fieldMappings={fieldMappings}
-                    />
-                    
-                    <div style={{ 
-                        marginTop: '16px', 
-                        display: 'flex', 
-                        justifyContent: 'flex-start'
-                    }}>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('mapping')}
-                            style={{
-                                padding: '8px 16px',
-                                fontSize: '13px',
-                                fontWeight: 500,
-                                backgroundColor: 'var(--framer-color-bg-secondary)',
-                                color: 'var(--framer-color-text)',
-                                border: '1px solid var(--framer-color-divider)',
-                                borderRadius: '4px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Voltar para Mapeamento
-                        </button>
-                    </div>
-                </div>
-            )
-        }
-
-        return (
-            <div style={{
-                padding: '20px',
-                backgroundColor: 'var(--framer-color-bg-secondary)',
-                border: '1px solid var(--framer-color-divider)',
-                borderRadius: '4px',
-                textAlign: 'center'
-            }}>
-                <p style={{ fontSize: '14px', color: 'var(--framer-color-text-secondary)' }}>
-                    Selecione uma tabela para começar
-                </p>
+                )}
             </div>
         )
     }
 
     return (
-        <div style={{
-            backgroundColor: 'var(--framer-color-bg)',
-            color: 'var(--framer-color-text)',
-            padding: '20px',
-            height: '100%',
-            overflow: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px'
-        }}>
-            <div style={{ textAlign: 'center' }}>
-                <h1 style={{ 
-                    fontSize: '18px',
-                    fontWeight: 600,
-                    color: 'var(--framer-color-text)',
-                    marginBottom: '8px'
+        <div className="container">
+            <header className="header">
+                <h1 style={{
+                    fontSize: '20px',
+                    margin: 0,
+                    color: 'var(--framer-color-text)'
                 }}>
                     Supabase Free Connect
                 </h1>
                 <p style={{
-                    fontSize: '13px',
-                    color: 'var(--framer-color-text-secondary)',
-                    marginBottom: '1px'
+                    fontSize: '14px',
+                    margin: '4px 0 0 0',
+                    color: 'var(--framer-color-text-secondary)'
                 }}>
-                    {config 
-                        ? 'Sua conexão está configurada com sucesso'
-                        : 'Configure sua conexão com o Supabase gratuitamente'}
+                    Conecte dados do Supabase ao Framer
                 </p>
-            </div>
-
-            {/* Renderiza o conteúdo baseado no estado */}
+            </header>
+            
             {renderContent()}
-
-            {/* Sempre mostra a configuração salva e o botão de resetar no rodapé */}
-            {config && (
-                <div style={{
-                    marginTop: 'auto',
-                    paddingTop: '16px',
-                    borderTop: '1px solid var(--framer-color-divider)'
-                }}>
-                    <div style={{
-                        padding: '12px',
-                        backgroundColor: 'var(--framer-color-bg-secondary)',
-                        borderRadius: '4px',
-                        border: '1px solid var(--framer-color-divider)',
-                        marginBottom: '12px'
-                    }}>
-                        <h2 style={{
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            marginBottom: '8px',
-                            color: 'var(--framer-color-text)'
-                        }}>
-                            Configuração Salva
-                        </h2>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <p style={{ fontSize: '12px', color: 'var(--framer-color-text-secondary)' }}>
-                                <span style={{ fontWeight: 500 }}>URL:</span> {config.url}
-                            </p>
-                            <p style={{ fontSize: '12px', color: 'var(--framer-color-text-secondary)' }}>
-                                <span style={{ fontWeight: 500 }}>Chave:</span>{' '}
-                                {'*'.repeat(Math.min(config.key.length, 20))}
-                            </p>
-                        </div>
-                    </div>
-
-                    {!showResetConfirm ? (
-                        <button
-                            type="button"
-                            onClick={handleResetClick}
-                            className="framer-button-danger"
-                            style={{
-                                width: '100%',
-                                padding: '8px 16px',
-                                fontSize: '13px',
-                                fontWeight: 500,
-                                cursor: 'pointer',
-                                backgroundColor: '#e53e3e',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px'
-                            }}
-                        >
-                            Resetar Conexão
-                        </button>
-                    ) : (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
-                                type="button"
-                                onClick={handleResetCancel}
-                                style={{
-                                    flex: 1,
-                                    padding: '8px 16px',
-                                    fontSize: '13px',
-                                    fontWeight: 500,
-                                    backgroundColor: 'var(--framer-color-bg-secondary)',
-                                    color: 'var(--framer-color-text)',
-                                    border: '1px solid var(--framer-color-divider)',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleResetConfirm}
-                                className="framer-button-danger"
-                                style={{
-                                    flex: 1,
-                                    padding: '8px 16px',
-                                    fontSize: '13px',
-                                    fontWeight: 500,
-                                    backgroundColor: '#e53e3e',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Confirmar Reset
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
         </div>
     )
 }
