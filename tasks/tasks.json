@@ -154,7 +154,7 @@
       "id": 10,
       "title": "Implement Basic Data Synchronization",
       "description": "Create the core functionality to sync data from Supabase to Framer CMS collections.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         4,
         5,
