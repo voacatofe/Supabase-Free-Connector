@@ -134,22 +134,22 @@ export function transformData(
 }
 
 /**
- * Cria um nome adequado para a coleção do Framer CMS baseado no nome da tabela
+ * Cria um nome para o Framer CMS baseado no nome da tabela
  */
-export function createFramerCollectionName(tableName: string): string {
-  // Remove "Collection" do final se presente
+export function createFramerName(tableName: string): string {
+  // Remove "Collection" do final se presente (para compatibilidade retroativa)
   const baseName = tableName.replace(/Collection$/, '');
   
-  // Formata o nome da coleção com primeira letra maiúscula e resto minúsculo
-  return baseName.charAt(0).toUpperCase() + baseName.slice(1).toLowerCase() + 'Collection';
+  // Formata o nome com primeira letra maiúscula
+  return baseName.charAt(0).toUpperCase() + baseName.slice(1).toLowerCase();
 }
 
 /**
- * Cria ou atualiza uma coleção no Framer CMS
+ * Cria ou atualiza dados no Framer CMS
  * Esta é uma função simulada, já que não temos acesso real à API do Framer CMS
  * Em um ambiente real, esta função usaria a API Framer.Collection ou getManagedCollection
  */
-export async function createOrUpdateFramerCollection(
+export async function createOrUpdateFramerData(
   collectionName: string,
   data: any[]
 ): Promise<SyncResult> {
@@ -158,21 +158,21 @@ export async function createOrUpdateFramerCollection(
     // const collection = Framer.Collection.getManagedCollection(collectionName);
     // collection.setData(data);
     
-    console.log(`Simulando criação/atualização da coleção "${collectionName}" com ${data.length} registros`);
+    console.log(`Simulando criação/atualização dos dados "${collectionName}" com ${data.length} registros`);
     
     // Aqui estamos apenas simulando a operação
     return {
       success: true,
-      message: `Coleção "${collectionName}" atualizada com sucesso.`,
+      message: `Dados "${collectionName}" atualizados com sucesso.`,
       data,
       collectionName,
       totalRecords: data.length
     };
   } catch (error) {
-    console.error('Erro ao criar/atualizar coleção:', error);
+    console.error('Erro ao criar/atualizar dados:', error);
     return {
       success: false,
-      message: 'Erro ao criar/atualizar coleção no Framer CMS',
+      message: 'Erro ao criar/atualizar dados no Framer CMS',
       error: error instanceof Error ? error.message : 'Erro desconhecido'
     };
   }
@@ -219,9 +219,9 @@ export async function syncDataToFramer(
       };
     }
     
-    // Passo 3: Criar ou atualizar a coleção no Framer
-    const collectionName = createFramerCollectionName(table.name);
-    const result = await createOrUpdateFramerCollection(collectionName, transformedData);
+    // Passo 3: Criar ou atualizar os dados no Framer
+    const name = createFramerName(table.name);
+    const result = await createOrUpdateFramerData(name, transformedData);
     
     return {
       ...result,
@@ -242,11 +242,7 @@ export async function syncDataToFramer(
  * Esta é uma função simulada, já que não temos acesso real à API do Framer CMS
  */
 export function checkFramerCollectionExists(collectionName: string): boolean {
-  // NOTA: Isto é uma simulação. Em um plugin real, você usaria:
-  // return !!Framer.Collection.getCollection(collectionName);
-  
-  console.log(`Simulando verificação de existência da coleção "${collectionName}"`);
-  return true; // Simulando que a coleção existe
+  return checkFramerDataExists(collectionName); // Redireciona para a nova função
 }
 
 /**
@@ -254,12 +250,7 @@ export function checkFramerCollectionExists(collectionName: string): boolean {
  * Esta é uma função simulada, já que não temos acesso real à API do Framer CMS
  */
 export function getFramerCollectionSchema(collectionName: string): any {
-  // NOTA: Isto é uma simulação. Em um plugin real, você usaria:
-  // const collection = Framer.Collection.getCollection(collectionName);
-  // return collection.getSchema();
-  
-  console.log(`Simulando obtenção de esquema da coleção "${collectionName}"`);
-  return {}; // Retornando objeto vazio como simulação
+  return getFramerDataSchema(collectionName); // Redireciona para a nova função
 }
 
 /**
@@ -290,4 +281,29 @@ export function formatLastSyncTime(date?: Date): string {
   
   // Formatação padrão para datas mais antigas
   return date.toLocaleString('pt-BR');
+}
+
+/**
+ * Verifica se os dados Framer existem
+ * Esta é uma função simulada, já que não temos acesso real à API do Framer CMS
+ */
+export function checkFramerDataExists(name: string): boolean {
+  // NOTA: Isto é uma simulação. Em um plugin real, você usaria:
+  // return !!Framer.Collection.getCollection(name);
+  
+  console.log(`Simulando verificação de existência dos dados "${name}"`);
+  return true; // Simulando que os dados existem
+}
+
+/**
+ * Obtém a estrutura dos dados Framer
+ * Esta é uma função simulada, já que não temos acesso real à API do Framer CMS
+ */
+export function getFramerDataSchema(name: string): any {
+  // NOTA: Isto é uma simulação. Em um plugin real, você usaria:
+  // const collection = Framer.Collection.getCollection(name);
+  // return collection.getSchema();
+  
+  console.log(`Simulando obtenção de esquema dos dados "${name}"`);
+  return {}; // Retornando objeto vazio como simulação
 } 

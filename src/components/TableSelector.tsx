@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { TableInfo, SupabaseConfig, TablePreviewResult } from '../types/supabase'
-import { fetchTablePreview } from '../supabase'
+import React, { useState, useEffect, useRef } from 'react'
+import { TableInfo, SupabaseConfig } from '../types/supabase'
 
 interface TableSelectorProps {
   tables: TableInfo[]
@@ -12,9 +11,16 @@ interface TableSelectorProps {
 
 export function TableSelector({ tables, config, onSelectTable, selectedTableName }: TableSelectorProps) {
   const [selectedTable, setSelectedTable] = useState<TableInfo | null>(null)
-  const [preview, setPreview] = useState<TablePreviewResult | null>(null)
-  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
+  const initialSelectionMade = useRef(false)
+
+  // Log inicial para depuração
+  useEffect(() => {
+    console.log('TableSelector montado/atualizado:', {
+      tablesCount: tables.length,
+      selectedTableName
+    });
+  }, [tables, selectedTableName]);
 
   // Função para formatar o nome da tabela para exibição (primeira letra maiúscula)
   const formatTableName = (name: string): string => {
@@ -22,46 +28,47 @@ export function TableSelector({ tables, config, onSelectTable, selectedTableName
     return name.charAt(0).toUpperCase() + name.slice(1);
   }
 
-  // Quando as tabelas ou o nome da tabela selecionada mudam, atualize a seleção
+  // Quando as tabelas mudam, atualize a seleção
   useEffect(() => {
-    if (selectedTableName && tables.length > 0) {
-      // Procura pela tabela pelo nome exato ou pelo nome formatado
-      const table = tables.find(t => t.name === selectedTableName || formatTableName(t.name) === selectedTableName)
-      if (table) {
-        setSelectedTable(table)
-      }
-    } else if (tables.length > 0 && !selectedTable) {
-      setSelectedTable(tables[0])
+    // Só continua se houver tabelas para processar
+    if (tables.length === 0) {
+      setSelectedTable(null);
+      return;
     }
-  }, [tables, selectedTableName, selectedTable])
-
-  // Quando uma tabela é selecionada, notifique o componente pai
-  useEffect(() => {
-    if (selectedTable) {
-      // Envie a tabela original sem modificar o nome
-      onSelectTable(selectedTable)
-    }
-  }, [selectedTable, onSelectTable])
-
-  // Carrega a prévia da tabela selecionada
-  const loadPreview = async () => {
-    if (!selectedTable) return
     
-    setIsLoadingPreview(true)
-    try {
-      // Usar o nome original da tabela para buscar a prévia
-      const result = await fetchTablePreview(config, selectedTable.name)
-      setPreview(result)
-    } catch (error) {
-      setPreview({
-        success: false,
-        message: 'Erro ao carregar prévia',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
-      })
-    } finally {
-      setIsLoadingPreview(false)
+    // Se temos um nome de tabela selecionado, encontre a tabela correspondente
+    if (selectedTableName) {
+      const table = tables.find(t => 
+        t.name === selectedTableName || 
+        formatTableName(t.name) === selectedTableName
+      );
+      
+      if (table) {
+        console.log('Tabela encontrada pelo nome:', table.name);
+        setSelectedTable(table);
+        initialSelectionMade.current = true;
+        return;
+      } else {
+        console.log('Tabela não encontrada pelo nome:', selectedTableName);
+      }
     }
-  }
+    
+    // Se não temos uma tabela selecionada e há tabelas disponíveis, selecione a primeira
+    if (!initialSelectionMade.current && tables.length > 0) {
+      console.log('Selecionando primeira tabela por padrão:', tables[0].name);
+      setSelectedTable(tables[0]);
+      initialSelectionMade.current = true;
+    }
+  }, [tables, selectedTableName]);
+
+  // Quando a tabela selecionada muda, notifique o componente pai, mas apenas
+  // se tiver sido realmente alterada e se a seleção for diferente do nome atual
+  useEffect(() => {
+    if (selectedTable && (!selectedTableName || selectedTable.name !== selectedTableName)) {
+      console.log('Notificando componente pai sobre seleção de tabela:', selectedTable.name);
+      onSelectTable(selectedTable);
+    }
+  }, [selectedTable, onSelectTable, selectedTableName]);
 
   // Formata o nome do tipo da coluna para exibição
   const formatColumnType = (type: string) => {
@@ -99,9 +106,6 @@ export function TableSelector({ tables, config, onSelectTable, selectedTableName
   // Alterna a exibição dos detalhes da tabela
   const toggleDetails = () => {
     setShowDetails(!showDetails)
-    if (!showDetails && !preview && selectedTable) {
-      loadPreview()
-    }
   }
 
   // Se não houver tabelas disponíveis, mostrar mensagem
@@ -240,68 +244,6 @@ export function TableSelector({ tables, config, onSelectTable, selectedTableName
                   Não foi possível obter a estrutura desta tabela.
                 </p>
               )}
-
-              <div style={{ marginTop: '16px' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 500, margin: '0 0 8px 0' }}>
-                  Prévia dos dados
-                </h3>
-                
-                {isLoadingPreview ? (
-                  <p style={{ fontSize: '13px', color: 'var(--framer-color-text-secondary)' }}>
-                    Carregando prévia...
-                  </p>
-                ) : preview?.success ? (
-                  preview.data && preview.data.length > 0 ? (
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                        <thead>
-                          <tr>
-                            {Object.keys(preview.data[0]).map(key => (
-                              <th 
-                                key={key} 
-                                style={{ 
-                                  textAlign: 'left', 
-                                  padding: '4px 8px', 
-                                  borderBottom: '1px solid var(--framer-color-divider)' 
-                                }}
-                              >
-                                {key}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {preview.data.map((row, index) => (
-                            <tr key={index}>
-                              {Object.values(row).map((value: any, idx) => (
-                                <td 
-                                  key={idx} 
-                                  style={{ 
-                                    padding: '4px 8px', 
-                                    borderBottom: '1px solid var(--framer-color-divider)' 
-                                  }}
-                                >
-                                  {value === null ? 'null' : 
-                                   typeof value === 'object' ? JSON.stringify(value) : 
-                                   String(value)}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p style={{ fontSize: '13px', color: 'var(--framer-color-text-secondary)' }}>
-                      Não foram encontrados dados nesta tabela.
-                    </p>
-                  )
-                ) : (
-                  <p style={{ fontSize: '13px', color: 'var(--framer-color-text-tertiary)' }}>
-                    {preview?.message || 'Não foi possível carregar a prévia dos dados.'}
-                  </p>
-                )}
-              </div>
             </div>
           )}
         </div>
