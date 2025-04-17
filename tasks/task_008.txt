@@ -1,0 +1,11 @@
+# Task ID: 8
+# Title: Implement Table Selection Component
+# Status: pending
+# Dependencies: 4, 6, 7
+# Priority: medium
+# Description: Create a component to list and select tables from the connected Supabase project.
+# Details:
+Implement components/TableSelector.tsx to fetch and display available tables from Supabase. Add search/filter functionality for projects with many tables. Include metadata display (row counts, creation date) if available. Implement selection mechanism and store the selected table for the next steps in the workflow.
+
+# Test Strategy:
+Test with Supabase projects containing different numbers of tables. Verify correct display of table information and proper selection behavior.

@@ -1,0 +1,11 @@
+# Task ID: 5
+# Title: Develop Field Mapping Utility
+# Status: pending
+# Dependencies: 3, 4
+# Priority: high
+# Description: Create utility functions to map between Supabase and Framer data types and field structures.
+# Details:
+Implement utils/fieldMapper.ts to handle automatic detection and mapping of Supabase field types to Framer CMS types. Support all types mentioned in the PRD: text to String, int4 to Number, bool to Boolean, timestamp to Date, jsonb to Object, and text[] to Array. Include functions to preview how data will appear after mapping.
+
+# Test Strategy:
+Test with various field types from Supabase and verify correct mapping to Framer types. Create test cases for each supported data type and edge cases.

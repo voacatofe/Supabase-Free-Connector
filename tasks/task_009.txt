@@ -1,0 +1,11 @@
+# Task ID: 9
+# Title: Develop Field Mapping Interface
+# Status: pending
+# Dependencies: 5, 6, 8
+# Priority: high
+# Description: Create the UI for mapping Supabase table fields to Framer CMS fields.
+# Details:
+Implement components/FieldMapper.tsx to display fields from the selected Supabase table. Create interface for customizing field mappings, including renaming fields and changing data types where appropriate. Add preview functionality to show sample data. Implement automatic mapping suggestions based on field names and types.
+
+# Test Strategy:
+Test with tables containing various field types. Verify that mappings can be customized and that the preview accurately reflects how data will appear in Framer.

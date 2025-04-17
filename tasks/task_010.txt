@@ -1,0 +1,11 @@
+# Task ID: 10
+# Title: Implement Basic Data Synchronization
+# Status: pending
+# Dependencies: 4, 5, 9
+# Priority: high
+# Description: Create the core functionality to sync data from Supabase to Framer CMS collections.
+# Details:
+Implement utils/sync.ts with functions to fetch data from Supabase based on selected table and field mappings. Create functions to convert Supabase data to Framer CMS format. Implement the Framer CMS collection creation and management using the getManagedCollection API. Add functionality to populate the collection with initial data from Supabase.
+
+# Test Strategy:
+Test synchronization with various data sets. Verify that data is correctly fetched from Supabase and properly formatted for Framer CMS. Confirm that collections are created with the correct structure.
