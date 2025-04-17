@@ -10,45 +10,38 @@ interface TableSelectorProps {
   hideSearch?: boolean
 }
 
-export function TableSelector({ tables, config, onSelectTable, selectedTableName, hideSearch = false }: TableSelectorProps) {
-  const [search, setSearch] = useState('')
+export function TableSelector({ tables, config, onSelectTable, selectedTableName }: TableSelectorProps) {
   const [selectedTable, setSelectedTable] = useState<TableInfo | null>(null)
   const [preview, setPreview] = useState<TablePreviewResult | null>(null)
   const [isLoadingPreview, setIsLoadingPreview] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
 
-  // Função para formatar o nome da tabela (remover "Collection")
+  // Função para formatar o nome da tabela para exibição (primeira letra maiúscula)
   const formatTableName = (name: string): string => {
-    return name.replace(/Collection$/, '')
+    // Apenas capitaliza a primeira letra
+    return name.charAt(0).toUpperCase() + name.slice(1);
   }
-
-  // Filtra as tabelas com base na pesquisa
-  const filteredTables = tables.filter(table => 
-    hideSearch ? true : formatTableName(table.name).toLowerCase().includes(search.toLowerCase())
-  )
 
   // Quando as tabelas ou o nome da tabela selecionada mudam, atualize a seleção
   useEffect(() => {
     if (selectedTableName && tables.length > 0) {
-      const table = tables.find(t => formatTableName(t.name) === selectedTableName || t.name === selectedTableName)
+      // Procura pela tabela pelo nome exato ou pelo nome formatado
+      const table = tables.find(t => t.name === selectedTableName || formatTableName(t.name) === selectedTableName)
       if (table) {
         setSelectedTable(table)
       }
     } else if (tables.length > 0 && !selectedTable) {
       setSelectedTable(tables[0])
     }
-  }, [tables, selectedTableName])
+  }, [tables, selectedTableName, selectedTable])
 
   // Quando uma tabela é selecionada, notifique o componente pai
   useEffect(() => {
     if (selectedTable) {
-      const formattedTable = {
-        ...selectedTable,
-        name: formatTableName(selectedTable.name)
-      }
-      onSelectTable(formattedTable)
+      // Envie a tabela original sem modificar o nome
+      onSelectTable(selectedTable)
     }
-  }, [selectedTable])
+  }, [selectedTable, onSelectTable])
 
   // Carrega a prévia da tabela selecionada
   const loadPreview = async () => {
@@ -56,6 +49,7 @@ export function TableSelector({ tables, config, onSelectTable, selectedTableName
     
     setIsLoadingPreview(true)
     try {
+      // Usar o nome original da tabela para buscar a prévia
       const result = await fetchTablePreview(config, selectedTable.name)
       setPreview(result)
     } catch (error) {
@@ -110,42 +104,25 @@ export function TableSelector({ tables, config, onSelectTable, selectedTableName
     }
   }
 
+  // Se não houver tabelas disponíveis, mostrar mensagem
+  if (tables.length === 0) {
+    return (
+      <div style={{ 
+        padding: '20px', 
+        backgroundColor: 'var(--framer-color-bg-secondary)',
+        borderRadius: '4px',
+        color: 'var(--framer-color-text-secondary)', 
+        textAlign: 'center',
+        fontSize: '14px',
+        border: '1px solid var(--framer-color-divider)'
+      }}>
+        Nenhuma tabela disponível no banco de dados Supabase.
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%' }}>
-      {!hideSearch && (
-        <div style={{ marginBottom: '12px' }}>
-          <label 
-            htmlFor="table-search"
-            style={{ 
-              display: 'block',
-              marginBottom: '6px',
-              fontSize: '13px',
-              fontWeight: 500,
-              color: 'var(--framer-color-text)'
-            }}
-          >
-            Buscar tabelas
-          </label>
-          <input
-            id="table-search"
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Digite para filtrar..."
-            style={{
-              width: '100%',
-              padding: '8px 10px',
-              fontSize: '13px',
-              border: '1px solid var(--framer-color-divider)',
-              borderRadius: '4px',
-              backgroundColor: 'var(--framer-color-bg-secondary)',
-              color: 'var(--framer-color-text)',
-              outline: 'none'
-            }}
-          />
-        </div>
-      )}
-
       <div style={{ marginBottom: '12px' }}>
         <label 
           htmlFor="table-select"
@@ -157,7 +134,7 @@ export function TableSelector({ tables, config, onSelectTable, selectedTableName
             color: 'var(--framer-color-text)'
           }}
         >
-          Selecione uma tabela ({filteredTables.length} disponíveis)
+          Selecione uma tabela ({tables.length} disponíveis)
         </label>
         <select
           id="table-select"
@@ -178,7 +155,7 @@ export function TableSelector({ tables, config, onSelectTable, selectedTableName
             textOverflow: 'ellipsis'
           }}
         >
-          {filteredTables.map(table => (
+          {tables.map(table => (
             <option key={table.name} value={table.name}>
               {formatTableName(table.name)}
             </option>
@@ -221,7 +198,7 @@ export function TableSelector({ tables, config, onSelectTable, selectedTableName
               }}
             >
               <h3 style={{ fontSize: '14px', fontWeight: 500, margin: '0 0 8px 0' }}>
-                Estrutura da tabela
+                Estrutura da tabela: {formatTableName(selectedTable.name)}
               </h3>
               
               {selectedTable.description && (
