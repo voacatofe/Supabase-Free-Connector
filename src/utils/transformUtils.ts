@@ -8,6 +8,13 @@
  */
 
 import { FieldMapping, FieldType } from '../types';
+import { 
+  convertToString, 
+  convertToNumber, 
+  convertToBoolean,
+  DEFAULT_VALUES as BASIC_DEFAULT_VALUES,
+  ConversionResult
+} from './basicTypeConverters';
 
 /**
  * Descrições detalhadas dos tipos de campo
@@ -34,20 +41,7 @@ export const TYPE_DESCRIPTIONS = {
  * Consistentes com as descrições nos tooltips
  */
 export const DEFAULT_VALUES: Record<FieldType, any> = {
-  'string': '',
-  'number': 0,
-  'boolean': false,
-  'date': null,
-  'color': '#000000',
-  'formattedText': '',
-  'image': null,
-  'file': null,
-  'link': '',
-  'enum': '',
-  'collectionReference': null,
-  'multiCollectionReference': [],
-  'object': {},
-  'array': []
+  ...BASIC_DEFAULT_VALUES
 };
 
 /**
@@ -67,19 +61,12 @@ export interface TransformResult {
  * @returns Resultado da transformação
  */
 export function transformToString(value: any): TransformResult {
-  if (value === null || value === undefined) {
-    return { success: true, value: DEFAULT_VALUES.string };
-  }
-
-  try {
-    return { success: true, value: String(value) };
-  } catch (error) {
-    return {
-      success: false,
-      value: DEFAULT_VALUES.string,
-      error: `Não foi possível converter para texto: ${error instanceof Error ? error.message : String(error)}`
-    };
-  }
+  const result = convertToString(value);
+  return {
+    success: result.success,
+    value: result.value,
+    error: result.error
+  };
 }
 
 /**
@@ -90,27 +77,12 @@ export function transformToString(value: any): TransformResult {
  * @returns Resultado da transformação
  */
 export function transformToNumber(value: any): TransformResult {
-  if (value === null || value === undefined) {
-    return { success: true, value: DEFAULT_VALUES.number };
-  }
-
-  try {
-    const num = Number(value);
-    if (isNaN(num)) {
-      return {
-        success: false,
-        value: DEFAULT_VALUES.number,
-        error: `Valor não é um número válido: ${String(value)}`
-      };
-    }
-    return { success: true, value: num };
-  } catch (error) {
-    return {
-      success: false,
-      value: DEFAULT_VALUES.number,
-      error: `Erro ao converter para número: ${error instanceof Error ? error.message : String(error)}`
-    };
-  }
+  const result = convertToNumber(value);
+  return {
+    success: result.success,
+    value: result.value,
+    error: result.error
+  };
 }
 
 /**
@@ -121,31 +93,12 @@ export function transformToNumber(value: any): TransformResult {
  * @returns Resultado da transformação
  */
 export function transformToBoolean(value: any): TransformResult {
-  if (value === null || value === undefined) {
-    return { success: true, value: DEFAULT_VALUES.boolean };
-  }
-
-  try {
-    // Conversão específica para strings
-    if (typeof value === 'string') {
-      const lowerValue = value.toLowerCase().trim();
-      if (['true', '1', 'yes', 'sim', 's', 'y', 'verdadeiro'].includes(lowerValue)) {
-        return { success: true, value: true };
-      }
-      if (['false', '0', 'no', 'não', 'nao', 'n', 'falso'].includes(lowerValue)) {
-        return { success: true, value: false };
-      }
-    }
-
-    // Conversão padrão para outros tipos
-    return { success: true, value: Boolean(value) };
-  } catch (error) {
-    return {
-      success: false,
-      value: DEFAULT_VALUES.boolean,
-      error: `Erro ao converter para booleano: ${error instanceof Error ? error.message : String(error)}`
-    };
-  }
+  const result = convertToBoolean(value);
+  return {
+    success: result.success,
+    value: result.value,
+    error: result.error
+  };
 }
 
 /**

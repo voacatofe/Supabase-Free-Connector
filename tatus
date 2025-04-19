@@ -1,0 +1,11 @@
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/Toast.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/transformUtils.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/validation.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tasks/task_007.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tasks/tasks.json', LF will be replaced by CRLF the next time Git touches it
+src/utils/basicTransformations.ts
+src/utils/transformUtils.ts
+tasks/task_007.txt
+tasks/tasks.json
