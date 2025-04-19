@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ColumnInfo } from '../types/supabase';
 import { FieldMapping, FieldType } from '../types';
 import { framer } from 'framer-plugin';
@@ -279,27 +279,6 @@ export function FieldMappingInterface({
     setMappings(updatedMappings);
 
     // Se autoSave estiver habilitado, salva automaticamente quando o tipo mudar
-    if (autoSave) {
-      handleSaveMappings();
-    }
-  };
-
-  /**
-   * Altera o nome do campo no Framer
-   * Se autoSave estiver habilitado, salva automaticamente a alteração
-   * 
-   * @param {number} index - Índice do mapeamento a ser alterado
-   * @param {string} newName - Novo nome para o campo no Framer
-   */
-  const handleFieldNameChange = (index: number, newName: string) => {
-    const updatedMappings = [...mappings];
-    updatedMappings[index] = {
-      ...updatedMappings[index],
-      targetField: newName
-    };
-    setMappings(updatedMappings);
-    
-    // Se autoSave estiver habilitado, salva automaticamente quando o nome mudar
     if (autoSave) {
       handleSaveMappings();
     }
