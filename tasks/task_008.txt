@@ -1,0 +1,31 @@
+# Task ID: 8
+# Title: Develop Upsert Synchronization Logic
+# Status: pending
+# Dependencies: 7
+# Priority: high
+# Description: Implement the core synchronization mechanism to update or create items in Framer CMS. Basic initial synchronization has been implemented, but differential synchronization for subsequent updates still needs to be developed.
+# Details:
+The basic synchronization engine that fetches data from Supabase (with pagination support) and creates items in Framer CMS has been implemented. Now we need to enhance the system with intelligent upsert logic for subsequent synchronizations. This includes comparing existing Framer CMS items using the primary key to determine whether to update or create items. Continue implementing batching for large datasets to avoid performance issues. Add progress tracking for user feedback. Include optional handling for item deletion. Ensure proper error handling during each step of the synchronization process, especially for differential updates.
+
+# Test Strategy:
+Test synchronization with various dataset sizes. Verify correct upsert behavior (updating existing items and creating new ones) during subsequent synchronizations. Test differential synchronization to ensure only changed data is updated. Test pagination with large datasets. Confirm proper handling of errors during synchronization.
+
+# Subtasks:
+## 8.1. Implement differential synchronization logic [pending]
+### Dependencies: None
+### Description: Develop logic to compare existing Framer CMS items with Supabase data to determine what needs to be updated, created, or deleted.
+### Details:
+
+
+## 8.2. Add intelligent upsert operations [pending]
+### Dependencies: None
+### Description: Implement logic to efficiently update only changed fields in existing items rather than replacing entire items.
+### Details:
+
+
+## 8.3. Optimize performance for subsequent synchronizations [pending]
+### Dependencies: None
+### Description: Ensure that subsequent synchronizations are faster by only processing changed data.
+### Details:
+
+

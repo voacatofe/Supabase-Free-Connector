@@ -1,0 +1,130 @@
+/* Your Plugin CSS */
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    padding: 0 15px 15px 15px;
+    height: 100%;
+    gap: 15px;
+}
+
+/* Estilos globais do aplicativo */
+.container {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--framer-color-bg);
+  color: var(--framer-color-text);
+  max-width: 100%;
+  height: 100%;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-size: 12px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+  color: var(--framer-color-text);
+  font-size: 14px;
+}
+
+button {
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  font-size: 12px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Animações */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes successPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+  }
+}
+
+/* Classe para o Toast */
+.framer-toast {
+  animation: slideIn 0.3s ease-out;
+  font-size: 12px;
+}
+
+/* Estilos específicos para tema claro e escuro */
+[data-framer-theme="light"] .framer-toast {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+[data-framer-theme="dark"] .framer-toast {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Ajustes para formulários */
+input, select, textarea {
+  background-color: var(--framer-color-bg-secondary);
+  border: 1px solid var(--framer-color-divider);
+  color: var(--framer-color-text);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--framer-color-tint);
+  box-shadow: 0 0 0 2px var(--framer-color-tint-dimmed);
+}
+
+/* Botões principais */
+.primary-button {
+  background-color: var(--framer-color-tint);
+  color: var(--framer-color-text-reversed);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.primary-button:hover {
+  background-color: var(--framer-color-tint-dark);
+}
+
+/* Botões secundários */
+.secondary-button {
+  background-color: var(--framer-color-bg-secondary);
+  color: var(--framer-color-text);
+  border: 1px solid var(--framer-color-divider);
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.secondary-button:hover {
+  background-color: var(--framer-color-bg-tertiary);
+}

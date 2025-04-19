@@ -1,0 +1,58 @@
+# Supabase Free Connector para Framer - PRD
+
+## Visão Geral
+O Supabase Free Connector é um plugin para o Framer que permite conectar um banco de dados Supabase ao Content Management System (CMS) do Framer, possibilitando a sincronização de dados. O plugin utiliza uma abordagem de sincronização manual ao invés de sincronização em tempo real, devido às limitações inerentes ao ambiente de plugins do Framer.
+
+## Funcionalidades Principais
+1. **Configuração do Plugin:** Armazenamento seguro das credenciais de conexão do Supabase e das configurações específicas do projeto (tabela selecionada, mapeamentos de campo, chave primária).
+2. **Interface de Mapeamento de Campos:** Interface que permite ao usuário selecionar a tabela Supabase, designar uma coluna como identificador único (chave primária) e mapear colunas do Supabase para campos do CMS do Framer.
+3. **Lógica de Sincronização Manual (Upsert):** Processo acionado pelo usuário que busca dados do Supabase, compara-os com os dados existentes no Framer CMS usando a chave primária e atualiza registros existentes ou cria novos.
+4. **Tratamento de Erros:** Mecanismos robustos para detectar, reportar e, quando possível, recuperar de erros durante a configuração e sincronização.
+
+## Requisitos Funcionais
+
+### Configuração e Autenticação
+- Armazenar de forma segura a URL e a Chave Anônima (Anon Key) do Supabase usando localStorage
+- Implementar configurações de projeto (tabela, mapeamentos, chave primária) através da API framer.setPluginData()
+- Inicializar cliente Supabase com as credenciais armazenadas
+
+### Interface de Mapeamento de Campos
+- Fornecer seletor para tabela Supabase a sincronizar
+- Permitir designação de uma coluna Supabase como chave primária
+- Implementar interface para mapear colunas Supabase para campos CMS Framer
+- Possibilitar a escolha do tipo de campo Framer (boolean, color, number, string, formattedText, image, file, link, date, enum, etc.)
+
+### Sincronização de Dados
+- Implementar recuperação de configurações armazenadas antes da sincronização
+- Obter dados da tabela Supabase configurada com paginação para grandes volumes
+- Buscar itens existentes no CMS Framer para comparação
+- Definir/atualizar campos da coleção Framer conforme mapeamento
+- Transformar dados Supabase para o formato esperado pelo Framer
+- Executar operação de upsert (addItems) no Framer CMS
+- Implementar tratamento opcional para exclusão de itens
+
+### Tratamento de Erros e Feedback
+- Identificar e tratar pontos de falha potenciais (configuração, conectividade, acesso, processamento)
+- Implementar validações de entrada e configuração
+- Fornecer feedback claro ao usuário através de notificações toast
+- Exibir mensagens de erro amigáveis e detalhadas
+
+## Requisitos Técnicos
+- Desenvolver em TypeScript
+- Utilizar @supabase/supabase-js para interação com Supabase
+- Implementar modos de plugin Framer (syncManagedCollection e configureManagedCollection)
+- Seguir as convenções da API de plugins Framer para CMS
+- Garantir tratamento correto de tipos de dados durante transformação
+
+## Limitações
+- Sincronização manual ao invés de tempo real (limitação da plataforma Framer)
+- Armazenamento limitado para configurações (máximo de 2kB por entrada, 4kB total no projeto)
+- Uso exclusivo da Chave Anônima (nunca usar a Chave de Serviço)
+- Dependência das Políticas de Segurança a Nível de Linha (RLS) do Supabase para segurança de dados
+
+## Métricas de Sucesso
+- Interface intuitiva para configuração de mapeamento
+- Sincronização correta de dados com diferentes tipos de campo
+- Prevenção de duplicatas através do mecanismo de upsert
+- Feedback claro ao usuário sobre progresso e erros
+- Tratamento robusto de cenários de erro 

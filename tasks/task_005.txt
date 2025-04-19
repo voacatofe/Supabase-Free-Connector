@@ -1,0 +1,92 @@
+# Task ID: 5
+# Title: Implement Primary Key Selection
+# Status: done
+# Dependencies: 4
+# Priority: high
+# Description: Add functionality to designate a column as the primary key for synchronization.
+# Details:
+Extend the table selection interface to allow users to designate one column as the primary key. Add validation to ensure the selected column is suitable as a primary key (unique, not null). Provide guidance to users about primary key requirements. Store the primary key selection using framer.setPluginData(). Include the ability to change the primary key and handle the resulting data implications.
+
+# Test Strategy:
+Test primary key selection and validation. Verify storage of primary key information. Test changing primary key and confirm proper handling of the change.
+
+# Subtasks:
+## 1. Extend UI to include primary key selection [done]
+### Dependencies: None
+### Description: Modify the table selection interface to include a dropdown or radio button selection for designating a column as the primary key.
+### Details:
+Implementation details:
+1. Add a new section in the table selection UI labeled 'Primary Key Selection'
+2. Create a dropdown component that lists all columns from the selected table
+3. Add a label and helper text explaining what a primary key is used for
+4. Style the component to match the existing UI design
+5. Implement the onChange handler to capture the selected column
+6. Add visual indication for the currently selected primary key
+
+Testing approach:
+- Verify the dropdown populates correctly with all columns from the selected table
+- Check that the UI is responsive and maintains layout integrity
+- Confirm the selection state updates properly when a column is chosen
+
+## 2. Implement primary key validation logic [done]
+### Dependencies: 5.1
+### Description: Create validation functions to check if the selected column is suitable as a primary key (unique, not null).
+### Details:
+Implementation details:
+1. Create a validatePrimaryKeyColumn() function that checks:
+   - Column contains no null values
+   - Column contains unique values
+   - Column data type is appropriate (number, string, etc.)
+2. Implement error messaging for invalid selections
+3. Add visual indicators (warning/error icons) next to invalid column options
+4. Create helper functions to analyze column data for uniqueness
+5. Add tooltips explaining why certain columns are unsuitable
+
+Testing approach:
+- Test validation with various column types (text, numbers, dates, etc.)
+- Verify correct error messages appear for invalid selections
+- Test edge cases like columns with sparse data or mixed types
+- Confirm validation runs when selection changes
+
+## 3. Implement primary key storage using plugin data [done]
+### Dependencies: 5.1, 5.2
+### Description: Store the primary key selection using framer.setPluginData() and implement retrieval functionality.
+### Details:
+Implementation details:
+1. Define a data structure for storing primary key information
+2. Implement saveSelectedPrimaryKey() function that uses framer.setPluginData() to store:
+   - Selected column name
+   - Timestamp of selection
+   - Validation status
+3. Create getSelectedPrimaryKey() function to retrieve stored primary key data
+4. Add logic to initialize the UI with previously selected primary key on component load
+5. Implement error handling for cases where stored data is corrupted or invalid
+
+Testing approach:
+- Verify primary key data persists after closing and reopening the plugin
+- Test data retrieval functions return expected values
+- Check that the UI correctly reflects the stored primary key selection
+- Test error handling with invalid stored data
+
+## 4. Implement primary key change handling [done]
+### Dependencies: 5.1, 5.2, 5.3
+### Description: Add functionality to handle changing the primary key and manage the resulting data implications.
+### Details:
+Implementation details:
+1. Create a changePrimaryKey() function that:
+   - Validates the new selection
+   - Shows a confirmation dialog explaining implications of changing the primary key
+   - Updates the stored primary key data
+2. Implement data remapping logic to handle existing synchronized data
+3. Add warning messages about potential data loss or sync issues
+4. Create a rollback mechanism in case of errors during primary key change
+5. Add logging for primary key changes to aid in troubleshooting
+6. Update any dependent components or data structures that rely on the primary key
+
+Testing approach:
+- Test changing primary key between different column types
+- Verify confirmation dialog appears with appropriate warnings
+- Check that existing data is properly handled after a primary key change
+- Test the rollback functionality works if errors occur
+- Verify all UI elements update correctly after primary key changes
+

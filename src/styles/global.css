@@ -1,0 +1,121 @@
+/* Estilos globais para suporte a temas claro/escuro do Framer */
+
+/* Aplicar configurações de cor baseadas no tema atual */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 12px;
+}
+
+/* Estilo padrão para seletores específicos */
+select, input, button, textarea {
+  font-family: inherit;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Estilos adicionais específicos para cada tema */
+[data-framer-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-framer-theme="light"] {
+  color-scheme: light;
+}
+
+/* Estilizações específicas para elementos de UI */
+button.framer-button-primary {
+  background-color: var(--framer-color-tint);
+  color: var(--framer-color-text-reversed);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+button.framer-button-primary:hover {
+  background-color: var(--framer-color-tint-dark);
+}
+
+.framer-divider {
+  height: 1px;
+  background-color: var(--framer-color-divider);
+  margin: 16px 0;
+}
+
+/* Estilos para mensagens de ajuda e tooltips */
+.framer-tooltip {
+  background-color: var(--framer-color-bg);
+  color: var(--framer-color-text);
+  border: 1px solid var(--framer-color-divider);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Estilos para elementos de formulário */
+input, select {
+  background-color: var(--framer-color-bg-secondary);
+  border: 1px solid var(--framer-color-divider);
+  color: var(--framer-color-text);
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--framer-color-tint);
+}
+
+/* Estilos para tabelas */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 11px;
+}
+
+table th {
+  text-align: left;
+  padding: 8px;
+  background-color: var(--framer-color-bg-secondary);
+  color: var(--framer-color-text);
+  border-bottom: 1px solid var(--framer-color-divider);
+  font-size: 11px;
+}
+
+table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--framer-color-divider);
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.framer-fadeIn {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Scrollbars personalizadas */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--framer-color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--framer-color-divider);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--framer-color-text-tertiary);
+} 

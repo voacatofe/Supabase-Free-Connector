@@ -1,0 +1,91 @@
+# Task ID: 7
+# Title: Implement Data Transformation Logic
+# Status: pending
+# Dependencies: 6
+# Priority: medium
+# Description: Create utilities to transform Supabase data to Framer CMS format based on field mappings.
+# Details:
+Develop transformation functions that convert Supabase data types to Framer CMS compatible formats according to the user-defined mappings. Handle special cases like dates, JSON objects, and arrays. Implement type checking and validation to ensure data integrity. Create fallback mechanisms for handling null or undefined values. Support all Framer field types mentioned in the requirements. Focus on simplicity in the transformation logic, without implementing example value previews for each field type. Integrate with the tooltip system that provides detailed information about each field type, including descriptions of Framer field types and the original Supabase type.
+
+# Test Strategy:
+Test transformation with various data types and edge cases. Verify correct handling of null/undefined values. Test with large datasets to ensure performance. Confirm all Framer field types are properly supported. Verify that the transformation logic correctly works with the tooltip system that displays field type information.
+
+# Subtasks:
+## 7.1. Ensure transformation logic works with tooltip information [done]
+### Dependencies: None
+### Description: Update the transformation logic to properly handle and utilize the tooltip information that has been implemented, including the detailed descriptions for each field type and the original Supabase type information.
+### Details:
+
+
+## 7.2. Validate transformation against tooltip descriptions [done]
+### Dependencies: None
+### Description: Verify that the transformation behavior matches the descriptions provided in the tooltips to maintain consistency between what is shown to users and how the data is actually transformed.
+### Details:
+Implementei um sistema completo de validação que garante que as transformações de dados estejam consistentes com as descrições exibidas nos tooltips. Criei os seguintes arquivos:
+
+1. `src/utils/validateTransformations.ts` - Contém funções para validar se as transformações estão alinhadas com as descrições dos tooltips, incluindo:
+   - `validateTransformationConsistency()` - Valida se uma transformação específica é consistente
+   - `validateAllTransformations()` - Testa todos os tipos com diversos valores
+   - `generateValidationReport()` - Gera um relatório detalhado dos resultados
+
+2. `src/utils/validateTooltipConsistency.ts` - Interface principal para execução da validação:
+   - `validateTransformationsAgainstTooltips()` - Executa a validação completa
+   - `checkSingleTransformation()` - Para testes pontuais
+   - Funcionalidade para gerar relatórios formatados
+
+3. `src/tests/validateTooltipConsistency.test.ts` - Utilitário para testes automatizados:
+   - Testes para descrições de tooltips
+   - Testes para transformações específicas
+   - Testes para valores nulos/indefinidos
+   - Sistema de geração de relatórios
+
+O sistema implementado verifica:
+- Se as descrições dos tooltips existem para todos os tipos de campo
+- Se o comportamento real das transformações corresponde ao descrito
+- Se valores inválidos, nulos e indefinidos são tratados adequadamente
+- Se o tipo de retorno das transformações é consistente com o esperado
+
+O relatório de validação agrupa os resultados por tipo e fornece informações detalhadas sobre qualquer inconsistência encontrada.
+
+## 7.3. Implementar funções de conversão de tipos básicos [pending]
+### Dependencies: None
+### Description: Desenvolver as funções centrais que convertem tipos de dados básicos do Supabase (string, number, boolean) para os formatos compatíveis com Framer CMS. Definir interfaces claras para entrada e saída, garantindo que cada função seja testável e reutilizável.
+### Details:
+Entrada: Valor do Supabase e tipo desejado no Framer. Saída: Valor formatado de acordo com as especificações do Framer. Incluir validação para garantir que a conversão seja possível e adicionar tratamento de erros apropriado.
+
+## 7.4. Implementar tratamento de tipos de dados complexos [pending]
+### Dependencies: None
+### Description: Desenvolver manipuladores específicos para tipos de dados complexos como datas, objetos, arrays e tipos personalizados do Supabase. Garantir que a transformação preserve a integridade dos dados e siga as convenções do Framer.
+### Details:
+Concentrar-se especialmente em: 1) Formatação de datas para tipos compatíveis com Framer, 2) Serialização/deserialização de objetos JSON, 3) Conversão de arrays com diferentes tipos de elementos, 4) Tratamento de tipos enum e referências para coleções, 5) Lidar com tipos personalizados específicos do projeto.
+
+## 7.5. Implementar sistema de validação e fallback [pending]
+### Dependencies: None
+### Description: Criar um sistema robusto de validação que verifique a integridade dos dados durante a transformação e implemente mecanismos de fallback para valores nulos, indefinidos ou inválidos.
+### Details:
+O sistema deve: 1) Verificar se os valores recebidos correspondem ao tipo esperado, 2) Implementar valores padrão apropriados para cada tipo de campo do Framer, 3) Registrar erros de transformação de forma clara, 4) Oferecer funções de recuperação para tentar transformações alternativas quando a principal falhar, 5) Garantir que mesmo com dados problemáticos, a sincronização não seja interrompida.
+
+## 7.6. Implementar sistema de transformação baseado em mapeamentos [pending]
+### Dependencies: None
+### Description: Desenvolver a função principal que utiliza os mapeamentos definidos pelo usuário para transformar dados do Supabase para o formato Framer CMS. Esta função deve ler os mapeamentos e aplicar as transformações apropriadas para cada campo, respeitando os tipos e formatos definidos.
+### Details:
+A função deve: 1) Receber dados brutos do Supabase e os mapeamentos definidos pelo usuário, 2) Para cada registro, mapear os campos do Supabase para os campos correspondentes no Framer usando as funções de transformação desenvolvidas, 3) Lidar com cenários onde nem todos os campos do Supabase estão mapeados, 4) Aplicar transformações específicas com base no tipo de campo de destino no Framer, 5) Retornar dados estruturados prontos para serem enviados ao Framer CMS, 6) Incluir metadados sobre quaisquer transformações que falharam para fins de depuração.
+
+## 7.7. Desenvolver funções de transformação para tipos específicos [pending]
+### Dependencies: None
+### Description: Criar um conjunto de funções de transformação específicas para cada tipo de dado suportado pelo Framer CMS (string, number, boolean, date, object, array).
+### Details:
+Este módulo deve conter funções especializadas para transformar dados entre diferentes tipos: 1) Conversão de string para outros tipos (parseamento de números, booleanos, datas), 2) Formatação de datas em formatos específicos exigidos pelo Framer, 3) Serialização/deserialização de objetos JSON, 4) Conversão de arrays e estruturas de dados complexas, 5) Implementar validação para cada tipo de transformação, garantindo que os dados de saída estejam no formato correto, 6) Fornecer valores padrão seguros quando a conversão falhar.
+
+## 7.8. Implementar tratamento de erros e logging [pending]
+### Dependencies: None
+### Description: Desenvolver um sistema robusto de tratamento de erros durante o processo de transformação, fornecendo feedback claro quando uma transformação falhar e registrando detalhes para depuração.
+### Details:
+O sistema de tratamento de erros deve: 1) Capturar e classificar diferentes tipos de erros de transformação (tipo inválido, formato incorreto, valor nulo, etc.), 2) Gerar mensagens de erro detalhadas e úteis que ajudem na depuração, 3) Implementar um mecanismo de fallback que permita que o processo continue mesmo quando algumas transformações falham, 4) Registrar estatísticas sobre transformações bem-sucedidas vs. falhas, 5) Fornecer uma interface para acessar o log de erros após a conclusão da transformação, 6) Garantir que os erros não exponham informações sensíveis.
+
+## 7.9. Implementar cache de transformações [pending]
+### Dependencies: None
+### Description: Desenvolver um mecanismo de cache para armazenar resultados de transformações frequentes, melhorando o desempenho e reduzindo a carga de processamento.
+### Details:
+O sistema de cache deve: 1) Armazenar os resultados de transformações anteriores indexados por uma chave de hash derivada dos dados e do mapeamento, 2) Implementar uma estratégia de invalidação de cache apropriada (tempo de expiração, LRU, etc.), 3) Fornecer métodos para limpar o cache manualmente quando necessário, 4) Incluir métricas de desempenho para medir a eficácia do cache (taxa de acertos/erros), 5) Garantir que o cache não consuma muita memória implementando limites configuráveis, 6) Oferecer opção para desativar o cache em situações onde dados sempre atualizados são necessários.
+

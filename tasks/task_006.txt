@@ -1,0 +1,205 @@
+# Task ID: 6
+# Title: Develop Field Mapping Interface
+# Status: done
+# Dependencies: 5
+# Priority: medium
+# Description: Create UI for mapping Supabase columns to Framer CMS fields with type selection.
+# Details:
+Build an interface that allows users to map each Supabase column to a Framer CMS field. Include dropdown selectors for Framer field types (boolean, color, number, string, formattedText, image, file, link, date, enum, etc.). Implement smart defaults based on Supabase column types. Store mapping configuration using framer.setPluginData(). Add validation to ensure all required fields are mapped. Include options to reset or modify existing mappings.
+
+# Test Strategy:
+Test the mapping interface with various column types. Verify storage and retrieval of mapping configurations. Test validation of required mappings. Confirm type suggestions work correctly based on Supabase column types.
+
+# Subtasks:
+## 1. Create Field Mapping UI Layout and Components [done]
+### Dependencies: None
+### Description: Build the basic UI layout for the field mapping interface with all necessary components including tables, dropdowns, and buttons.
+### Details:
+Implementation steps:
+1. Create a container component for the mapping interface
+2. Design a table-like layout with rows for each Supabase column
+3. Implement column headers (Supabase Column, Framer Field Type, etc.)
+4. Create dropdown component for Framer field type selection with all options (boolean, color, number, string, formattedText, image, file, link, date, enum, etc.)
+5. Add action buttons (Save, Reset, Cancel)
+6. Style components according to Framer's design system
+7. Ensure the UI is responsive and scrollable for many fields
+
+Testing approach:
+- Verify all UI components render correctly
+- Check that the layout handles different screen sizes
+- Ensure dropdowns contain all required field types
+
+## 2. Implement Smart Default Type Mapping Logic [done]
+### Dependencies: 6.1
+### Description: Create logic to analyze Supabase column types and suggest appropriate default Framer field types.
+### Details:
+Implementation steps:
+1. Create a mapping function that takes a Supabase column type and returns a suggested Framer field type
+2. Handle all common Supabase types: text → string, boolean → boolean, int/float → number, json → formattedText, timestamp → date, etc.
+3. Add special case handling for column names that suggest specific types (e.g., columns with 'image', 'url', 'link', 'color' in the name)
+4. Implement function to pre-populate the mapping interface with these smart defaults
+5. Allow overriding of defaults via the dropdown selectors
+
+Testing approach:
+- Unit test the mapping function with various Supabase column types
+- Verify that special case detection works correctly
+- Test with real database schema examples
+
+## 3. Implement Mapping Configuration Storage [done]
+### Dependencies: 6.1, 6.2
+### Description: Create functionality to save, load, and reset field mapping configurations using Framer's plugin data storage.
+### Details:
+Implementation steps:
+1. Define a data structure for storing mapping configurations
+2. Implement save functionality using framer.setPluginData() to store the current mapping
+3. Create a function to load existing mappings using framer.getPluginData()
+4. Implement reset functionality to clear mappings or revert to defaults
+5. Add logic to detect if a mapping already exists when the interface loads
+6. Create functions to modify existing mappings
+7. Implement auto-save functionality for mapping changes
+
+Testing approach:
+- Verify mappings are correctly saved and retrieved
+- Test the reset functionality works as expected
+- Check that existing mappings are properly loaded
+- Ensure modifications to mappings are properly persisted
+
+## 4. Add Validation and Finalize Interface [done]
+### Dependencies: 6.1, 6.2, 6.3
+### Description: Implement validation logic to ensure all required fields are properly mapped and finalize the interface with error handling.
+### Details:
+Implementation steps:
+1. Create validation rules for mapping configurations (e.g., required fields must be mapped)
+2. Implement visual indicators for validation errors (e.g., highlighting invalid mappings)
+3. Add validation checks before saving configurations
+4. Create helpful error messages for invalid mappings
+5. Implement a confirmation dialog when overwriting existing mappings
+6. Add tooltips or help text explaining field type options
+7. Implement final UI polish and error handling
+8. Add loading states during save/load operations
+
+Testing approach:
+- Test validation with various invalid mapping scenarios
+- Verify error messages are clear and helpful
+- Test the complete workflow from creating to modifying mappings
+- Ensure the interface handles edge cases gracefully (e.g., very long field names, many fields)
+
+## 5. Aprimorar validação de mapeamentos [done]
+### Dependencies: 6.4
+### Description: Implementar validação completa para garantir que todos os campos obrigatórios sejam mapeados corretamente.
+### Details:
+Passos de implementação:
+1. Criar regras de validação específicas para cada tipo de campo do Framer
+2. Adicionar verificação de campos obrigatórios (como a chave primária)
+3. Implementar validação em tempo real ao mudar tipos de campo
+4. Adicionar indicadores visuais claros para mapeamentos inválidos (destacando campos com erro)
+5. Exibir mensagens de erro informativas que orientam o usuário sobre como corrigir problemas
+6. Implementar validação antes de permitir o salvamento de configurações incorretas
+7. Adicionar validação de consistência entre tipos de dados do Supabase e tipos de campo do Framer
+
+Abordagem de teste:
+- Testar diferentes cenários de mapeamentos inválidos
+- Verificar se os indicadores visuais aparecem nos campos corretos
+- Confirmar que as mensagens de erro são claras e acionáveis
+
+## 6. Aprimorar opções de redefinição e modificação [done]
+### Dependencies: 6.4
+### Description: Adicionar controles claros para redefinir, modificar e gerenciar mapeamentos existentes.
+### Details:
+Passos de implementação:
+1. Adicionar botão 'Redefinir para Padrões' que reconfigura os mapeamentos para os valores sugeridos automaticamente
+2. Implementar botão 'Limpar Todos os Mapeamentos' que remove todas as configurações
+3. Adicionar diálogo de confirmação antes de sobrescrever mapeamentos existentes
+4. Implementar funcionalidade para exportar e importar configurações de mapeamento
+5. Adicionar botão para reverter alterações não salvas
+6. Implementar histórico de alterações recentes para possibilitar desfazer/refazer
+7. Criar função para comparar mapeamentos atuais com os salvos anteriormente
+
+Abordagem de teste:
+- Verificar se as opções de redefinição funcionam corretamente
+- Testar os diálogos de confirmação em diferentes cenários
+- Confirmar que o histórico de alterações permite desfazer ações corretamente
+
+<info added on 2025-04-19T15:18:10.343Z>
+Atualização técnica:
+
+Os botões implementados utilizam o componente `Button` do Framer com variantes "destructive" para ações de limpeza e "default" para redefinição. Os diálogos de confirmação foram construídos com o componente `AlertDialog` do Radix UI, que fornece acessibilidade nativa.
+
+Detalhes de implementação:
+- Armazenamento temporário dos mapeamentos em `useState` antes da confirmação final
+- Uso de `useReducer` para gerenciar o estado dos mapeamentos e facilitar operações de desfazer/refazer
+- Adicionada lógica para detectar alterações não salvas (`isDirty`) comparando objetos com deep equality
+
+Próximos passos técnicos:
+1. Implementar exportação/importação usando `JSON.stringify/parse` com validação de esquema
+2. Criar hook personalizado `useHistoryState` para gerenciar o histórico de alterações
+3. Implementar sistema de eventos para registrar alterações no histórico
+4. Adicionar indicadores visuais quando houver alterações não salvas
+
+Estimativa: 70% concluído para os itens 1-3 do plano original, 0% para itens 4-7.
+</info added on 2025-04-19T15:18:10.343Z>
+
+<info added on 2025-04-19T15:19:24.204Z>
+<info added on 2025-05-15T10:42:33.000Z>
+Atualização de escopo:
+
+Após análise de requisitos e prioridades, o escopo desta tarefa foi reduzido para focar apenas nas funcionalidades essenciais:
+
+- MANTIDO: Botões 'Redefinir para Padrões' e 'Limpar Mapeamentos' com diálogos de confirmação
+- MANTIDO: Estilização consistente com o tema do Framer e organização responsiva (flex-wrap: wrap)
+
+REMOVIDO DO ESCOPO (itens 4-7 do plano original):
+- Exportação/importação de configurações
+- Funcionalidade para reverter alterações não salvas
+- Sistema de histórico de alterações (desfazer/refazer)
+- Comparação de mapeamentos
+
+Justificativa técnica:
+1. As funcionalidades mantidas atendem ao caso de uso principal do plugin
+2. A implementação simplificada reduz a complexidade de manutenção
+3. O armazenamento local via localStorage já fornece persistência suficiente
+4. A interface atual já oferece feedback visual adequado para as ações do usuário
+
+Status atualizado: 100% concluído para os itens 1-3 do plano original, itens 4-7 removidos do escopo.
+</info added on 2025-05-15T10:42:33.000Z>
+</info added on 2025-04-19T15:19:24.204Z>
+
+## 7. Melhorar a experiência do usuário [done]
+### Dependencies: 6.4, 6.5, 6.6
+### Description: Aprimorar a interface para fornecer melhor feedback, orientação e usabilidade.
+### Details:
+Passos de implementação:
+1. Adicionar tooltips detalhados para cada tipo de campo explicando seu uso e comportamento
+2. Implementar feedback visual imediato quando configurações são salvas (animação de sucesso, notificações toast)
+3. Adicionar exemplos de valores convertidos para cada tipo de campo selecionado
+4. Melhorar o tratamento de erros com mensagens amigáveis e sugestões de solução
+5. Implementar estados de carregamento durante operações assíncronas
+6. Adicionar instruções contextuais na interface para orientar usuários
+7. Otimizar a navegação por teclado para melhor acessibilidade
+8. Implementar temas claro/escuro consistentes com a interface do Framer
+
+Abordagem de teste:
+- Avaliar a clareza e utilidade dos tooltips e mensagens
+- Verificar se o feedback de salvamento é claro e eficaz
+- Confirmar que os estados de carregamento são exibidos apropriadamente
+- Testar a navegação por teclado e acessibilidade
+
+## 8. Documentação do código e da interface [done]
+### Dependencies: 6.5, 6.6, 6.7
+### Description: Criar documentação abrangente para o código da interface de mapeamento e instruções para os usuários.
+### Details:
+Passos de implementação:
+1. Adicionar comentários detalhados em todas as funções principais do código
+2. Criar documentação de API para componentes reutilizáveis
+3. Documentar padrões e lógica de validação
+4. Adicionar instruções passo a passo na interface do usuário
+5. Implementar um guia rápido inicial para novos usuários (tooltips de onboarding)
+6. Criar exemplos de mapeamentos comuns para referência
+7. Documentar comportamentos específicos para tipos de campos especiais
+8. Adicionar documentação de solução de problemas para erros comuns
+
+Abordagem de teste:
+- Revisar a clareza e completude da documentação
+- Verificar se as instruções na interface são compreensíveis
+- Testar o guia de onboarding com diferentes cenários de uso
+

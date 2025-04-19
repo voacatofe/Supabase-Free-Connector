@@ -1,0 +1,477 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Setup Project Structure and Dependencies",
+      "description": "Initialize the TypeScript project and install required dependencies including @supabase/supabase-js and Framer plugin SDK.",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Create a new TypeScript project with proper tsconfig.json configuration. Install @supabase/supabase-js for Supabase interaction and any required Framer plugin dependencies. Set up the basic folder structure following Framer plugin conventions with separate directories for components, utils, and types. Initialize the plugin entry points for the two required modes: syncManagedCollection and configureManagedCollection.",
+      "testStrategy": "Verify project builds without errors. Confirm all dependencies are correctly installed and importable. Test basic plugin registration with Framer.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Initialize TypeScript Project with Basic Configuration",
+          "description": "Create a new TypeScript project with proper tsconfig.json configuration for Framer plugin development.",
+          "dependencies": [],
+          "details": "1. Create a new directory for the project\n2. Initialize npm project with `npm init -y`\n3. Install TypeScript with `npm install typescript --save-dev`\n4. Create tsconfig.json with appropriate settings:\n   - Set target to ES6\n   - Enable strict type checking\n   - Configure module resolution\n   - Set outDir to './dist'\n   - Include source maps for debugging\n5. Create .gitignore file to exclude node_modules and dist directories\n6. Test by running `tsc --noEmit` to verify configuration",
+          "status": "done",
+          "parentTaskId": 1
+        },
+        {
+          "id": 2,
+          "title": "Install and Configure Required Dependencies",
+          "description": "Install Supabase client library and Framer plugin SDK dependencies with proper type definitions.",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Install Supabase client: `npm install @supabase/supabase-js`\n2. Install Framer plugin SDK: `npm install @framerjs/plugin-api --save-dev`\n3. Install any additional utility libraries needed (e.g., `npm install uuid`)\n4. Install dev dependencies for testing: `npm install jest @types/jest ts-jest --save-dev`\n5. Configure package.json scripts for building and testing\n6. Create a simple test to verify dependencies are correctly installed\n7. Test by importing libraries in a test file and checking for type errors",
+          "status": "done",
+          "parentTaskId": 1
+        },
+        {
+          "id": 3,
+          "title": "Set Up Project Folder Structure",
+          "description": "Create the folder structure following Framer plugin conventions with separate directories for components, utils, and types.",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Create the following directory structure:\n   - src/\n     - components/ (for UI components)\n     - utils/ (for helper functions)\n     - types/ (for TypeScript interfaces and types)\n     - services/ (for Supabase service layer)\n     - constants/ (for configuration constants)\n   - test/\n   - dist/ (for compiled output)\n2. Create placeholder index files in each directory\n3. Create basic README.md with project setup instructions\n4. Set up linting with ESLint: `npm install eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin --save-dev`\n5. Configure .eslintrc.js with appropriate rules\n6. Test the structure by running the linter on the project",
+          "status": "done",
+          "parentTaskId": 1
+        },
+        {
+          "id": 4,
+          "title": "Initialize Plugin Entry Points",
+          "description": "Create the entry point files for the two required plugin modes: syncManagedCollection and configureManagedCollection.",
+          "dependencies": [
+            1,
+            2,
+            3
+          ],
+          "details": "1. Create src/index.ts as the main entry point\n2. Define the plugin manifest with required metadata\n3. Create src/syncManagedCollection.ts with basic structure:\n   - Export a function that will handle the sync mode\n   - Add type definitions for parameters and return values\n   - Implement skeleton logic with TODOs\n4. Create src/configureManagedCollection.ts with basic structure:\n   - Export a function that will handle the configuration mode\n   - Add type definitions for parameters and return values\n   - Implement skeleton logic with TODOs\n5. Set up proper exports in index.ts\n6. Test by importing the entry points in a test file and checking for type errors",
+          "status": "done",
+          "parentTaskId": 1
+        },
+        {
+          "id": 5,
+          "title": "Configure Build Process and Verify Setup",
+          "description": "Set up the build process with webpack or esbuild and verify the complete project setup works correctly.",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "details": "1. Install build tools: `npm install webpack webpack-cli ts-loader --save-dev` (or esbuild alternative)\n2. Create webpack.config.js with appropriate configuration:\n   - Configure entry points\n   - Set up TypeScript loader\n   - Configure output format for Framer plugin\n3. Add build scripts to package.json\n4. Create a simple end-to-end test that imports all components\n5. Build the project with `npm run build`\n6. Verify the output in the dist directory\n7. Create a sample plugin manifest that references the built files\n8. Test the complete setup by running a smoke test that imports the main entry points",
+          "status": "done",
+          "parentTaskId": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Implement Supabase Authentication Storage",
+      "description": "Create secure storage mechanism for Supabase URL and Anon Key using localStorage.",
+      "status": "done",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "Implement utility functions to securely store and retrieve Supabase credentials (URL and Anon Key) in localStorage. Include validation to ensure credentials are properly formatted. Create functions for setting, getting, and clearing credentials. Add encryption if possible for additional security. Ensure credentials are never exposed in logs or error messages.",
+      "testStrategy": "Test storing and retrieving credentials. Verify validation rejects malformed URLs or keys. Confirm credentials persist across page reloads but can be cleared when needed.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create basic credential storage utility functions",
+          "description": "Implement core utility functions for storing, retrieving, and clearing Supabase credentials in localStorage with proper validation",
+          "dependencies": [],
+          "details": "1. Create a new utility file (e.g., `supabaseStorage.js`)\n2. Implement constants for localStorage keys (e.g., `SUPABASE_URL_KEY`, `SUPABASE_ANON_KEY`)\n3. Create validation functions to check URL format (should be a valid URL) and Anon Key format (should be a non-empty string)\n4. Implement `storeSupabaseCredentials(url, anonKey)` function that validates inputs before storing in localStorage\n5. Implement `getSupabaseCredentials()` function that retrieves and returns both values as an object\n6. Implement `clearSupabaseCredentials()` function to remove stored values\n7. Add error handling that doesn't expose credential values in error messages\n8. Write unit tests for validation logic and storage operations",
+          "status": "done",
+          "parentTaskId": 2
+        },
+        {
+          "id": 2,
+          "title": "Add encryption layer for credential storage",
+          "description": "Enhance security by implementing encryption/decryption for stored credentials",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Research and select a lightweight encryption library suitable for browser environments (e.g., CryptoJS)\n2. Install the selected encryption library\n3. Create encryption utility functions in a separate file (e.g., `encryption.js`)\n4. Implement `encrypt(data, secretKey)` function that returns encrypted string\n5. Implement `decrypt(encryptedData, secretKey)` function that returns decrypted data\n6. Generate a device-specific encryption key (could be derived from browser fingerprint or randomly generated and stored)\n7. Modify the credential storage functions from subtask 1 to use encryption/decryption\n8. Update unit tests to verify encryption is working correctly\n9. Test in different browsers to ensure compatibility",
+          "status": "done",
+          "parentTaskId": 2
+        },
+        {
+          "id": 3,
+          "title": "Create secure credential management interface",
+          "description": "Build a higher-level interface for securely managing Supabase credentials with additional security measures",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Create a new file (e.g., `supabaseAuth.js`) that will serve as the main interface for credential management\n2. Implement a `SupabaseCredentialManager` class that internally uses the storage and encryption utilities\n3. Add methods for initializing credentials, checking if credentials exist, and validating credentials\n4. Implement credential rotation capability (ability to update credentials)\n5. Add an optional timeout feature that automatically clears credentials after a period of inactivity\n6. Implement a method to create a Supabase client instance using stored credentials\n7. Add logging that records credential operations without exposing sensitive data\n8. Create comprehensive documentation with usage examples\n9. Write integration tests that verify the complete credential management flow\n10. Implement a demo page showing how to use the credential manager",
+          "status": "done",
+          "parentTaskId": 2
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Develop Supabase Client Initialization",
+      "description": "Create a module to initialize and manage the Supabase client using stored credentials.",
+      "status": "done",
+      "dependencies": [
+        2
+      ],
+      "priority": "high",
+      "details": "Implement a Supabase client factory that initializes the client using credentials from localStorage. Include error handling for missing or invalid credentials. Create a mechanism to test connection validity. Implement proper client disposal when needed. Ensure the client is initialized with appropriate timeout and retry settings.",
+      "testStrategy": "Test client initialization with valid and invalid credentials. Verify connection testing works correctly. Confirm error handling properly captures and reports authentication issues."
+    },
+    {
+      "id": 4,
+      "title": "Create Table Selection Interface",
+      "description": "Develop UI component for selecting a Supabase table and viewing its schema.",
+      "status": "done",
+      "dependencies": [
+        3
+      ],
+      "priority": "high",
+      "details": "Create a UI component that fetches and displays available tables from the connected Supabase instance. Implement table selection functionality. After table selection, fetch and display the table schema (column names and types). Include loading states and error handling for failed table fetches. Use Framer's UI components for consistency with the platform.",
+      "testStrategy": "Test table fetching with valid credentials. Verify proper display of table names and schema information. Confirm error states are properly handled and displayed to users."
+    },
+    {
+      "id": 5,
+      "title": "Implement Primary Key Selection",
+      "description": "Add functionality to designate a column as the primary key for synchronization.",
+      "status": "done",
+      "dependencies": [
+        4
+      ],
+      "priority": "high",
+      "details": "Extend the table selection interface to allow users to designate one column as the primary key. Add validation to ensure the selected column is suitable as a primary key (unique, not null). Provide guidance to users about primary key requirements. Store the primary key selection using framer.setPluginData(). Include the ability to change the primary key and handle the resulting data implications.",
+      "testStrategy": "Test primary key selection and validation. Verify storage of primary key information. Test changing primary key and confirm proper handling of the change.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Extend UI to include primary key selection",
+          "description": "Modify the table selection interface to include a dropdown or radio button selection for designating a column as the primary key.",
+          "dependencies": [],
+          "details": "Implementation details:\n1. Add a new section in the table selection UI labeled 'Primary Key Selection'\n2. Create a dropdown component that lists all columns from the selected table\n3. Add a label and helper text explaining what a primary key is used for\n4. Style the component to match the existing UI design\n5. Implement the onChange handler to capture the selected column\n6. Add visual indication for the currently selected primary key\n\nTesting approach:\n- Verify the dropdown populates correctly with all columns from the selected table\n- Check that the UI is responsive and maintains layout integrity\n- Confirm the selection state updates properly when a column is chosen",
+          "status": "done",
+          "parentTaskId": 5
+        },
+        {
+          "id": 2,
+          "title": "Implement primary key validation logic",
+          "description": "Create validation functions to check if the selected column is suitable as a primary key (unique, not null).",
+          "dependencies": [
+            1
+          ],
+          "details": "Implementation details:\n1. Create a validatePrimaryKeyColumn() function that checks:\n   - Column contains no null values\n   - Column contains unique values\n   - Column data type is appropriate (number, string, etc.)\n2. Implement error messaging for invalid selections\n3. Add visual indicators (warning/error icons) next to invalid column options\n4. Create helper functions to analyze column data for uniqueness\n5. Add tooltips explaining why certain columns are unsuitable\n\nTesting approach:\n- Test validation with various column types (text, numbers, dates, etc.)\n- Verify correct error messages appear for invalid selections\n- Test edge cases like columns with sparse data or mixed types\n- Confirm validation runs when selection changes",
+          "status": "done",
+          "parentTaskId": 5
+        },
+        {
+          "id": 3,
+          "title": "Implement primary key storage using plugin data",
+          "description": "Store the primary key selection using framer.setPluginData() and implement retrieval functionality.",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "Implementation details:\n1. Define a data structure for storing primary key information\n2. Implement saveSelectedPrimaryKey() function that uses framer.setPluginData() to store:\n   - Selected column name\n   - Timestamp of selection\n   - Validation status\n3. Create getSelectedPrimaryKey() function to retrieve stored primary key data\n4. Add logic to initialize the UI with previously selected primary key on component load\n5. Implement error handling for cases where stored data is corrupted or invalid\n\nTesting approach:\n- Verify primary key data persists after closing and reopening the plugin\n- Test data retrieval functions return expected values\n- Check that the UI correctly reflects the stored primary key selection\n- Test error handling with invalid stored data",
+          "status": "done",
+          "parentTaskId": 5
+        },
+        {
+          "id": 4,
+          "title": "Implement primary key change handling",
+          "description": "Add functionality to handle changing the primary key and manage the resulting data implications.",
+          "dependencies": [
+            1,
+            2,
+            3
+          ],
+          "details": "Implementation details:\n1. Create a changePrimaryKey() function that:\n   - Validates the new selection\n   - Shows a confirmation dialog explaining implications of changing the primary key\n   - Updates the stored primary key data\n2. Implement data remapping logic to handle existing synchronized data\n3. Add warning messages about potential data loss or sync issues\n4. Create a rollback mechanism in case of errors during primary key change\n5. Add logging for primary key changes to aid in troubleshooting\n6. Update any dependent components or data structures that rely on the primary key\n\nTesting approach:\n- Test changing primary key between different column types\n- Verify confirmation dialog appears with appropriate warnings\n- Check that existing data is properly handled after a primary key change\n- Test the rollback functionality works if errors occur\n- Verify all UI elements update correctly after primary key changes",
+          "status": "done",
+          "parentTaskId": 5
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Develop Field Mapping Interface",
+      "description": "Create UI for mapping Supabase columns to Framer CMS fields with type selection.",
+      "status": "done",
+      "dependencies": [
+        5
+      ],
+      "priority": "medium",
+      "details": "Build an interface that allows users to map each Supabase column to a Framer CMS field. Include dropdown selectors for Framer field types (boolean, color, number, string, formattedText, image, file, link, date, enum, etc.). Implement smart defaults based on Supabase column types. Store mapping configuration using framer.setPluginData(). Add validation to ensure all required fields are mapped. Include options to reset or modify existing mappings.",
+      "testStrategy": "Test the mapping interface with various column types. Verify storage and retrieval of mapping configurations. Test validation of required mappings. Confirm type suggestions work correctly based on Supabase column types.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create Field Mapping UI Layout and Components",
+          "description": "Build the basic UI layout for the field mapping interface with all necessary components including tables, dropdowns, and buttons.",
+          "dependencies": [],
+          "details": "Implementation steps:\n1. Create a container component for the mapping interface\n2. Design a table-like layout with rows for each Supabase column\n3. Implement column headers (Supabase Column, Framer Field Type, etc.)\n4. Create dropdown component for Framer field type selection with all options (boolean, color, number, string, formattedText, image, file, link, date, enum, etc.)\n5. Add action buttons (Save, Reset, Cancel)\n6. Style components according to Framer's design system\n7. Ensure the UI is responsive and scrollable for many fields\n\nTesting approach:\n- Verify all UI components render correctly\n- Check that the layout handles different screen sizes\n- Ensure dropdowns contain all required field types",
+          "status": "done",
+          "parentTaskId": 6
+        },
+        {
+          "id": 2,
+          "title": "Implement Smart Default Type Mapping Logic",
+          "description": "Create logic to analyze Supabase column types and suggest appropriate default Framer field types.",
+          "dependencies": [
+            1
+          ],
+          "details": "Implementation steps:\n1. Create a mapping function that takes a Supabase column type and returns a suggested Framer field type\n2. Handle all common Supabase types: text → string, boolean → boolean, int/float → number, json → formattedText, timestamp → date, etc.\n3. Add special case handling for column names that suggest specific types (e.g., columns with 'image', 'url', 'link', 'color' in the name)\n4. Implement function to pre-populate the mapping interface with these smart defaults\n5. Allow overriding of defaults via the dropdown selectors\n\nTesting approach:\n- Unit test the mapping function with various Supabase column types\n- Verify that special case detection works correctly\n- Test with real database schema examples",
+          "status": "done",
+          "parentTaskId": 6
+        },
+        {
+          "id": 3,
+          "title": "Implement Mapping Configuration Storage",
+          "description": "Create functionality to save, load, and reset field mapping configurations using Framer's plugin data storage.",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "Implementation steps:\n1. Define a data structure for storing mapping configurations\n2. Implement save functionality using framer.setPluginData() to store the current mapping\n3. Create a function to load existing mappings using framer.getPluginData()\n4. Implement reset functionality to clear mappings or revert to defaults\n5. Add logic to detect if a mapping already exists when the interface loads\n6. Create functions to modify existing mappings\n7. Implement auto-save functionality for mapping changes\n\nTesting approach:\n- Verify mappings are correctly saved and retrieved\n- Test the reset functionality works as expected\n- Check that existing mappings are properly loaded\n- Ensure modifications to mappings are properly persisted",
+          "status": "done",
+          "parentTaskId": 6
+        },
+        {
+          "id": 4,
+          "title": "Add Validation and Finalize Interface",
+          "description": "Implement validation logic to ensure all required fields are properly mapped and finalize the interface with error handling.",
+          "dependencies": [
+            1,
+            2,
+            3
+          ],
+          "details": "Implementation steps:\n1. Create validation rules for mapping configurations (e.g., required fields must be mapped)\n2. Implement visual indicators for validation errors (e.g., highlighting invalid mappings)\n3. Add validation checks before saving configurations\n4. Create helpful error messages for invalid mappings\n5. Implement a confirmation dialog when overwriting existing mappings\n6. Add tooltips or help text explaining field type options\n7. Implement final UI polish and error handling\n8. Add loading states during save/load operations\n\nTesting approach:\n- Test validation with various invalid mapping scenarios\n- Verify error messages are clear and helpful\n- Test the complete workflow from creating to modifying mappings\n- Ensure the interface handles edge cases gracefully (e.g., very long field names, many fields)",
+          "status": "done",
+          "parentTaskId": 6
+        },
+        {
+          "id": 5,
+          "title": "Aprimorar validação de mapeamentos",
+          "description": "Implementar validação completa para garantir que todos os campos obrigatórios sejam mapeados corretamente.",
+          "dependencies": [
+            4
+          ],
+          "details": "Passos de implementação:\n1. Criar regras de validação específicas para cada tipo de campo do Framer\n2. Adicionar verificação de campos obrigatórios (como a chave primária)\n3. Implementar validação em tempo real ao mudar tipos de campo\n4. Adicionar indicadores visuais claros para mapeamentos inválidos (destacando campos com erro)\n5. Exibir mensagens de erro informativas que orientam o usuário sobre como corrigir problemas\n6. Implementar validação antes de permitir o salvamento de configurações incorretas\n7. Adicionar validação de consistência entre tipos de dados do Supabase e tipos de campo do Framer\n\nAbordagem de teste:\n- Testar diferentes cenários de mapeamentos inválidos\n- Verificar se os indicadores visuais aparecem nos campos corretos\n- Confirmar que as mensagens de erro são claras e acionáveis",
+          "status": "done",
+          "parentTaskId": 6
+        },
+        {
+          "id": 6,
+          "title": "Aprimorar opções de redefinição e modificação",
+          "description": "Adicionar controles claros para redefinir, modificar e gerenciar mapeamentos existentes.",
+          "dependencies": [
+            4
+          ],
+          "details": "Passos de implementação:\n1. Adicionar botão 'Redefinir para Padrões' que reconfigura os mapeamentos para os valores sugeridos automaticamente\n2. Implementar botão 'Limpar Todos os Mapeamentos' que remove todas as configurações\n3. Adicionar diálogo de confirmação antes de sobrescrever mapeamentos existentes\n4. Implementar funcionalidade para exportar e importar configurações de mapeamento\n5. Adicionar botão para reverter alterações não salvas\n6. Implementar histórico de alterações recentes para possibilitar desfazer/refazer\n7. Criar função para comparar mapeamentos atuais com os salvos anteriormente\n\nAbordagem de teste:\n- Verificar se as opções de redefinição funcionam corretamente\n- Testar os diálogos de confirmação em diferentes cenários\n- Confirmar que o histórico de alterações permite desfazer ações corretamente\n\n<info added on 2025-04-19T15:18:10.343Z>\nAtualização técnica:\n\nOs botões implementados utilizam o componente `Button` do Framer com variantes \"destructive\" para ações de limpeza e \"default\" para redefinição. Os diálogos de confirmação foram construídos com o componente `AlertDialog` do Radix UI, que fornece acessibilidade nativa.\n\nDetalhes de implementação:\n- Armazenamento temporário dos mapeamentos em `useState` antes da confirmação final\n- Uso de `useReducer` para gerenciar o estado dos mapeamentos e facilitar operações de desfazer/refazer\n- Adicionada lógica para detectar alterações não salvas (`isDirty`) comparando objetos com deep equality\n\nPróximos passos técnicos:\n1. Implementar exportação/importação usando `JSON.stringify/parse` com validação de esquema\n2. Criar hook personalizado `useHistoryState` para gerenciar o histórico de alterações\n3. Implementar sistema de eventos para registrar alterações no histórico\n4. Adicionar indicadores visuais quando houver alterações não salvas\n\nEstimativa: 70% concluído para os itens 1-3 do plano original, 0% para itens 4-7.\n</info added on 2025-04-19T15:18:10.343Z>\n\n<info added on 2025-04-19T15:19:24.204Z>\n<info added on 2025-05-15T10:42:33.000Z>\nAtualização de escopo:\n\nApós análise de requisitos e prioridades, o escopo desta tarefa foi reduzido para focar apenas nas funcionalidades essenciais:\n\n- MANTIDO: Botões 'Redefinir para Padrões' e 'Limpar Mapeamentos' com diálogos de confirmação\n- MANTIDO: Estilização consistente com o tema do Framer e organização responsiva (flex-wrap: wrap)\n\nREMOVIDO DO ESCOPO (itens 4-7 do plano original):\n- Exportação/importação de configurações\n- Funcionalidade para reverter alterações não salvas\n- Sistema de histórico de alterações (desfazer/refazer)\n- Comparação de mapeamentos\n\nJustificativa técnica:\n1. As funcionalidades mantidas atendem ao caso de uso principal do plugin\n2. A implementação simplificada reduz a complexidade de manutenção\n3. O armazenamento local via localStorage já fornece persistência suficiente\n4. A interface atual já oferece feedback visual adequado para as ações do usuário\n\nStatus atualizado: 100% concluído para os itens 1-3 do plano original, itens 4-7 removidos do escopo.\n</info added on 2025-05-15T10:42:33.000Z>\n</info added on 2025-04-19T15:19:24.204Z>",
+          "status": "done",
+          "parentTaskId": 6
+        },
+        {
+          "id": 7,
+          "title": "Melhorar a experiência do usuário",
+          "description": "Aprimorar a interface para fornecer melhor feedback, orientação e usabilidade.",
+          "dependencies": [
+            4,
+            5,
+            6
+          ],
+          "details": "Passos de implementação:\n1. Adicionar tooltips detalhados para cada tipo de campo explicando seu uso e comportamento\n2. Implementar feedback visual imediato quando configurações são salvas (animação de sucesso, notificações toast)\n3. Adicionar exemplos de valores convertidos para cada tipo de campo selecionado\n4. Melhorar o tratamento de erros com mensagens amigáveis e sugestões de solução\n5. Implementar estados de carregamento durante operações assíncronas\n6. Adicionar instruções contextuais na interface para orientar usuários\n7. Otimizar a navegação por teclado para melhor acessibilidade\n8. Implementar temas claro/escuro consistentes com a interface do Framer\n\nAbordagem de teste:\n- Avaliar a clareza e utilidade dos tooltips e mensagens\n- Verificar se o feedback de salvamento é claro e eficaz\n- Confirmar que os estados de carregamento são exibidos apropriadamente\n- Testar a navegação por teclado e acessibilidade",
+          "status": "done",
+          "parentTaskId": 6
+        },
+        {
+          "id": 8,
+          "title": "Documentação do código e da interface",
+          "description": "Criar documentação abrangente para o código da interface de mapeamento e instruções para os usuários.",
+          "dependencies": [
+            5,
+            6,
+            7
+          ],
+          "details": "Passos de implementação:\n1. Adicionar comentários detalhados em todas as funções principais do código\n2. Criar documentação de API para componentes reutilizáveis\n3. Documentar padrões e lógica de validação\n4. Adicionar instruções passo a passo na interface do usuário\n5. Implementar um guia rápido inicial para novos usuários (tooltips de onboarding)\n6. Criar exemplos de mapeamentos comuns para referência\n7. Documentar comportamentos específicos para tipos de campos especiais\n8. Adicionar documentação de solução de problemas para erros comuns\n\nAbordagem de teste:\n- Revisar a clareza e completude da documentação\n- Verificar se as instruções na interface são compreensíveis\n- Testar o guia de onboarding com diferentes cenários de uso",
+          "status": "done",
+          "parentTaskId": 6
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Implement Data Transformation Logic",
+      "description": "Create utilities to transform Supabase data to Framer CMS format based on field mappings.",
+      "status": "pending",
+      "dependencies": [
+        6
+      ],
+      "priority": "medium",
+      "details": "Develop transformation functions that convert Supabase data types to Framer CMS compatible formats according to the user-defined mappings. Handle special cases like dates, JSON objects, and arrays. Implement type checking and validation to ensure data integrity. Create fallback mechanisms for handling null or undefined values. Support all Framer field types mentioned in the requirements. Focus on simplicity in the transformation logic, without implementing example value previews for each field type. Integrate with the tooltip system that provides detailed information about each field type, including descriptions of Framer field types and the original Supabase type.",
+      "testStrategy": "Test transformation with various data types and edge cases. Verify correct handling of null/undefined values. Test with large datasets to ensure performance. Confirm all Framer field types are properly supported. Verify that the transformation logic correctly works with the tooltip system that displays field type information.",
+      "subtasks": [
+        {
+          "id": "7.1",
+          "title": "Ensure transformation logic works with tooltip information",
+          "description": "Update the transformation logic to properly handle and utilize the tooltip information that has been implemented, including the detailed descriptions for each field type and the original Supabase type information.",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 7
+        },
+        {
+          "id": "7.2",
+          "title": "Validate transformation against tooltip descriptions",
+          "description": "Verify that the transformation behavior matches the descriptions provided in the tooltips to maintain consistency between what is shown to users and how the data is actually transformed.",
+          "status": "done",
+          "dependencies": [],
+          "details": "Implementei um sistema completo de validação que garante que as transformações de dados estejam consistentes com as descrições exibidas nos tooltips. Criei os seguintes arquivos:\n\n1. `src/utils/validateTransformations.ts` - Contém funções para validar se as transformações estão alinhadas com as descrições dos tooltips, incluindo:\n   - `validateTransformationConsistency()` - Valida se uma transformação específica é consistente\n   - `validateAllTransformations()` - Testa todos os tipos com diversos valores\n   - `generateValidationReport()` - Gera um relatório detalhado dos resultados\n\n2. `src/utils/validateTooltipConsistency.ts` - Interface principal para execução da validação:\n   - `validateTransformationsAgainstTooltips()` - Executa a validação completa\n   - `checkSingleTransformation()` - Para testes pontuais\n   - Funcionalidade para gerar relatórios formatados\n\n3. `src/tests/validateTooltipConsistency.test.ts` - Utilitário para testes automatizados:\n   - Testes para descrições de tooltips\n   - Testes para transformações específicas\n   - Testes para valores nulos/indefinidos\n   - Sistema de geração de relatórios\n\nO sistema implementado verifica:\n- Se as descrições dos tooltips existem para todos os tipos de campo\n- Se o comportamento real das transformações corresponde ao descrito\n- Se valores inválidos, nulos e indefinidos são tratados adequadamente\n- Se o tipo de retorno das transformações é consistente com o esperado\n\nO relatório de validação agrupa os resultados por tipo e fornece informações detalhadas sobre qualquer inconsistência encontrada.",
+          "parentTaskId": 7
+        },
+        {
+          "id": "7.3",
+          "title": "Implementar funções de conversão de tipos básicos",
+          "description": "Desenvolver as funções centrais que convertem tipos de dados básicos do Supabase (string, number, boolean) para os formatos compatíveis com Framer CMS. Definir interfaces claras para entrada e saída, garantindo que cada função seja testável e reutilizável.",
+          "status": "pending",
+          "dependencies": [],
+          "details": "Entrada: Valor do Supabase e tipo desejado no Framer. Saída: Valor formatado de acordo com as especificações do Framer. Incluir validação para garantir que a conversão seja possível e adicionar tratamento de erros apropriado.",
+          "parentTaskId": 7
+        },
+        {
+          "id": "7.4",
+          "title": "Implementar tratamento de tipos de dados complexos",
+          "description": "Desenvolver manipuladores específicos para tipos de dados complexos como datas, objetos, arrays e tipos personalizados do Supabase. Garantir que a transformação preserve a integridade dos dados e siga as convenções do Framer.",
+          "status": "pending",
+          "dependencies": [],
+          "details": "Concentrar-se especialmente em: 1) Formatação de datas para tipos compatíveis com Framer, 2) Serialização/deserialização de objetos JSON, 3) Conversão de arrays com diferentes tipos de elementos, 4) Tratamento de tipos enum e referências para coleções, 5) Lidar com tipos personalizados específicos do projeto.",
+          "parentTaskId": 7
+        },
+        {
+          "id": "7.5",
+          "title": "Implementar sistema de validação e fallback",
+          "description": "Criar um sistema robusto de validação que verifique a integridade dos dados durante a transformação e implemente mecanismos de fallback para valores nulos, indefinidos ou inválidos.",
+          "status": "pending",
+          "dependencies": [],
+          "details": "O sistema deve: 1) Verificar se os valores recebidos correspondem ao tipo esperado, 2) Implementar valores padrão apropriados para cada tipo de campo do Framer, 3) Registrar erros de transformação de forma clara, 4) Oferecer funções de recuperação para tentar transformações alternativas quando a principal falhar, 5) Garantir que mesmo com dados problemáticos, a sincronização não seja interrompida.",
+          "parentTaskId": 7
+        },
+        {
+          "id": "7.6",
+          "title": "Implementar sistema de transformação baseado em mapeamentos",
+          "description": "Desenvolver a função principal que utiliza os mapeamentos definidos pelo usuário para transformar dados do Supabase para o formato Framer CMS. Esta função deve ler os mapeamentos e aplicar as transformações apropriadas para cada campo, respeitando os tipos e formatos definidos.",
+          "status": "pending",
+          "dependencies": [],
+          "details": "A função deve: 1) Receber dados brutos do Supabase e os mapeamentos definidos pelo usuário, 2) Para cada registro, mapear os campos do Supabase para os campos correspondentes no Framer usando as funções de transformação desenvolvidas, 3) Lidar com cenários onde nem todos os campos do Supabase estão mapeados, 4) Aplicar transformações específicas com base no tipo de campo de destino no Framer, 5) Retornar dados estruturados prontos para serem enviados ao Framer CMS, 6) Incluir metadados sobre quaisquer transformações que falharam para fins de depuração.",
+          "parentTaskId": 7
+        },
+        {
+          "id": "7.7",
+          "title": "Desenvolver funções de transformação para tipos específicos",
+          "description": "Criar um conjunto de funções de transformação específicas para cada tipo de dado suportado pelo Framer CMS (string, number, boolean, date, object, array).",
+          "status": "pending",
+          "dependencies": [],
+          "details": "Este módulo deve conter funções especializadas para transformar dados entre diferentes tipos: 1) Conversão de string para outros tipos (parseamento de números, booleanos, datas), 2) Formatação de datas em formatos específicos exigidos pelo Framer, 3) Serialização/deserialização de objetos JSON, 4) Conversão de arrays e estruturas de dados complexas, 5) Implementar validação para cada tipo de transformação, garantindo que os dados de saída estejam no formato correto, 6) Fornecer valores padrão seguros quando a conversão falhar.",
+          "parentTaskId": 7
+        },
+        {
+          "id": "7.8",
+          "title": "Implementar tratamento de erros e logging",
+          "description": "Desenvolver um sistema robusto de tratamento de erros durante o processo de transformação, fornecendo feedback claro quando uma transformação falhar e registrando detalhes para depuração.",
+          "status": "pending",
+          "dependencies": [],
+          "details": "O sistema de tratamento de erros deve: 1) Capturar e classificar diferentes tipos de erros de transformação (tipo inválido, formato incorreto, valor nulo, etc.), 2) Gerar mensagens de erro detalhadas e úteis que ajudem na depuração, 3) Implementar um mecanismo de fallback que permita que o processo continue mesmo quando algumas transformações falham, 4) Registrar estatísticas sobre transformações bem-sucedidas vs. falhas, 5) Fornecer uma interface para acessar o log de erros após a conclusão da transformação, 6) Garantir que os erros não exponham informações sensíveis.",
+          "parentTaskId": 7
+        },
+        {
+          "id": "7.9",
+          "title": "Implementar cache de transformações",
+          "description": "Desenvolver um mecanismo de cache para armazenar resultados de transformações frequentes, melhorando o desempenho e reduzindo a carga de processamento.",
+          "status": "pending",
+          "dependencies": [],
+          "details": "O sistema de cache deve: 1) Armazenar os resultados de transformações anteriores indexados por uma chave de hash derivada dos dados e do mapeamento, 2) Implementar uma estratégia de invalidação de cache apropriada (tempo de expiração, LRU, etc.), 3) Fornecer métodos para limpar o cache manualmente quando necessário, 4) Incluir métricas de desempenho para medir a eficácia do cache (taxa de acertos/erros), 5) Garantir que o cache não consuma muita memória implementando limites configuráveis, 6) Oferecer opção para desativar o cache em situações onde dados sempre atualizados são necessários.",
+          "parentTaskId": 7
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Develop Upsert Synchronization Logic",
+      "description": "Implement the core synchronization mechanism to update or create items in Framer CMS. Basic initial synchronization has been implemented, but differential synchronization for subsequent updates still needs to be developed.",
+      "status": "pending",
+      "dependencies": [
+        7
+      ],
+      "priority": "high",
+      "details": "The basic synchronization engine that fetches data from Supabase (with pagination support) and creates items in Framer CMS has been implemented. Now we need to enhance the system with intelligent upsert logic for subsequent synchronizations. This includes comparing existing Framer CMS items using the primary key to determine whether to update or create items. Continue implementing batching for large datasets to avoid performance issues. Add progress tracking for user feedback. Include optional handling for item deletion. Ensure proper error handling during each step of the synchronization process, especially for differential updates.",
+      "testStrategy": "Test synchronization with various dataset sizes. Verify correct upsert behavior (updating existing items and creating new ones) during subsequent synchronizations. Test differential synchronization to ensure only changed data is updated. Test pagination with large datasets. Confirm proper handling of errors during synchronization.",
+      "subtasks": [
+        {
+          "id": "8.1",
+          "title": "Implement differential synchronization logic",
+          "description": "Develop logic to compare existing Framer CMS items with Supabase data to determine what needs to be updated, created, or deleted.",
+          "status": "pending"
+        },
+        {
+          "id": "8.2",
+          "title": "Add intelligent upsert operations",
+          "description": "Implement logic to efficiently update only changed fields in existing items rather than replacing entire items.",
+          "status": "pending"
+        },
+        {
+          "id": "8.3",
+          "title": "Optimize performance for subsequent synchronizations",
+          "description": "Ensure that subsequent synchronizations are faster by only processing changed data.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Implement Error Handling and User Feedback",
+      "description": "Enhance the existing basic feedback system with comprehensive error handling and detailed user notifications.",
+      "status": "pending",
+      "dependencies": [
+        8
+      ],
+      "priority": "medium",
+      "details": "The basic feedback for successful synchronization is already implemented. Now we need to enhance the system with: 1) A robust error handling system that catches and processes errors at various levels (configuration, connection, data fetching, transformation, and synchronization). 2) User-friendly error messages that provide clear guidance on how to resolve issues. 3) Improved toast notifications for progress and error states. 4) Detailed logging for troubleshooting. 5) Recovery mechanisms where possible.",
+      "testStrategy": "Test error handling by simulating various failure scenarios. Verify user-friendly messages are displayed. Confirm enhanced toast notifications work correctly for different states. Test recovery mechanisms to ensure they work as expected. Verify that the existing successful synchronization feedback continues to work properly."
+    },
+    {
+      "id": 10,
+      "title": "Finalize Plugin Modes and Integration",
+      "description": "Complete the implementation of required Framer plugin modes and ensure seamless integration. The plugin is already working in development mode, but final optimizations and refinements are still needed.",
+      "status": "pending",
+      "dependencies": [
+        9
+      ],
+      "priority": "low",
+      "details": "The plugin is currently functional in development mode, but requires finalization and optimization. Complete the implementation of both required plugin modes: syncManagedCollection and configureManagedCollection. Ensure proper integration with Framer's plugin system. Implement configuration persistence between sessions. Add plugin metadata and documentation. Perform final optimization for performance. Ensure the plugin adheres to Framer's size limitations for plugin data storage (2kB per entry, 4kB total).",
+      "testStrategy": "Test both plugin modes in the Framer environment. Verify configuration persistence across sessions. Confirm the plugin works correctly with the Framer CMS. Test with various project sizes to ensure performance and storage limitations are respected."
+    },
+    {
+      "id": 11,
+      "title": "Document completion of transformation logic integration with tooltips",
+      "description": "Add a confirmation note that task 7.1 (Ensure transformation logic works with tooltip information) is completed, as the transformation logic is already integrated with tooltip information.",
+      "details": "Create documentation confirming that task 7.1 has been successfully completed. The documentation should note that the getTypeDescription function has been implemented and all transformations consistently follow the tooltip descriptions. The note should be added to the appropriate project documentation or task tracking system. Include specific examples of how the transformation logic uses the tooltip information to provide consistent descriptions across the application. Reference the implementation of the getTypeDescription function and how it's being used throughout the codebase.",
+      "testStrategy": "Verify that the documentation accurately reflects the current state of the implementation by: 1) Reviewing the getTypeDescription function implementation to confirm it properly retrieves tooltip information, 2) Testing several different transformation types to ensure they all display the correct tooltip information, 3) Checking that the documentation clearly states that task 7.1 is complete with appropriate evidence, 4) Having another team member review the documentation for clarity and accuracy, 5) Ensuring the documentation is stored in the appropriate location according to the project's documentation standards.",
+      "status": "done",
+      "dependencies": [],
+      "priority": "medium"
+    }
+  ],
+  "metadata": {
+    "projectName": "Supabase Free Connector for Framer",
+    "totalTasks": 10,
+    "sourceFile": "C:\\Users\\darla\\OneDrive\\Documentos\\Supabase-Free-Connector\\scripts\\prd.txt",
+    "generatedAt": "2023-11-13"
+  }
+}

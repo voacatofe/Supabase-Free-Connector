@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: Create Table Selection Interface
+# Status: done
+# Dependencies: 3
+# Priority: high
+# Description: Develop UI component for selecting a Supabase table and viewing its schema.
+# Details:
+Create a UI component that fetches and displays available tables from the connected Supabase instance. Implement table selection functionality. After table selection, fetch and display the table schema (column names and types). Include loading states and error handling for failed table fetches. Use Framer's UI components for consistency with the platform.
+
+# Test Strategy:
+Test table fetching with valid credentials. Verify proper display of table names and schema information. Confirm error states are properly handled and displayed to users.
