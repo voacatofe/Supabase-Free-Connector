@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { TableInfo, SupabaseConfig } from '../types/supabase';
 import { FieldMapping } from '../types/framer';
 import { framer } from '../services/framer';
-import { ColumnInfo, FieldType } from '../types';
+import { ColumnInfo } from '../types';
 
 // Interface para o resultado da sincronização
 export interface SyncResult {
@@ -45,6 +45,13 @@ interface SupabaseError extends ErrorMessage {
   details: string;
   hint?: string;
   code?: string;
+}
+
+// Interface para informações do site
+export interface SiteInfo {
+  id: string;
+  name: string;
+  [key: string]: any;
 }
 
 /**
@@ -492,51 +499,70 @@ export async function createOrUpdateFramerData(
   data: any[]
 ): Promise<SyncResult> {
   try {
+    console.log(`Iniciando sincronização para coleção "${collectionName}" com ${data.length} registros`);
+    
     // Obtém a coleção gerenciada do Framer
     const collection = await framer.getManagedCollection();
     
     if (!collection) {
+      console.error('Coleção não disponível no Framer');
       return {
         success: false,
         message: 'Não foi possível obter a coleção no Framer CMS',
         error: 'Coleção não disponível'
       };
     }
+    
+    console.log('Coleção Framer obtida com sucesso:', collection ? 'disponível' : 'indisponível');
 
     // Variável para armazenar os campos configurados
     let configuredFields: Array<{ id: string; name: string; type: string }> = [];
     
     // Define os campos baseado no primeiro item de dados
     if (data.length > 0) {
+      console.log('Configurando campos para o Framer CMS');
+      
       // Obtém os campos existentes (se houver)
       const existingFields = await collection.getFields();
+      console.log('Campos existentes na coleção:', existingFields.length);
+      
       const existingFieldMap = new Map(
         existingFields.map(field => [field.name, field])
       );
       
       const sampleItem = data[0];
+      console.log('Amostra de item para configuração de campos:', 
+                  Object.keys(sampleItem).slice(0, 5).join(', ') + 
+                  (Object.keys(sampleItem).length > 5 ? '...' : ''));
       
       // Prepara os campos
-      // Como a API do Framer espera tipos específicos para cada campo, 
-      // vamos usar a API nativa para configurar os campos
       const fields: Array<{ id: string; name: string; type: string }> = [];
       
       for (const key of Object.keys(sampleItem)) {
-        // Pula os campos especiais de ID que adicionamos
-        if (key === '_id' || key === 'id') continue;
+        // Pula os campos especiais de ID
+        if (key === '_id' || key === 'id' || key === 'slug') {
+          console.log(`Ignorando campo especial: ${key}`);
+          continue;
+        }
         
         const value = sampleItem[key];
+        // Determina o tipo de campo adequado com base no valor
         const fieldType = getFramerFieldType(value);
+        console.log(`Campo "${key}" detectado como tipo: ${fieldType}`);
+        
         // Use o campo existente se já estiver definido com o mesmo nome
         const existingField = existingFieldMap.get(key);
         
         if (existingField) {
+          console.log(`Usando campo existente: ${key} (${existingField.type})`);
           fields.push(existingField as any);
         } else {
-          // Para simplificar, tratamos todos os campos como string
-          // Em um plugin real, você pode adicionar lógica adicional para campos de diferentes tipos
+          // Cria um novo campo com ID seguro e tipo apropriado
+          const fieldId = `field_${key.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          console.log(`Criando novo campo: ${key} (${fieldType}) com ID: ${fieldId}`);
+          
           fields.push({
-            id: `field_${key.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            id: fieldId,
             name: key,
             type: fieldType
           });
@@ -545,28 +571,26 @@ export async function createOrUpdateFramerData(
 
       // Salva os campos para uso posterior
       configuredFields = fields;
+      console.log(`Total de ${fields.length} campos configurados`);
       
-      // Usa any para ignorar erros de tipagem, já que a API do Framer espera tipos específicos
-      // que diferem da nossa interface simplificada
-      await collection.setFields(fields as any);
+      // Configura os campos na coleção
+      console.log('Definindo campos na coleção Framer...');
+      try {
+        await collection.setFields(fields as any);
+        console.log('Campos definidos com sucesso');
+      } catch (error) {
+        console.error('Erro ao definir campos:', error);
+        throw error;
+      }
     }
     
-    // Para rastrear quais itens foram obtidos e serão atualizados
-    console.log('Preparando para atualizar ou criar itens...');
-    // Nota: Em uma implementação ideal, buscaríamos os itens existentes para
-    // compará-los e fazer upsert, mas como a API atual não suporta esse cenário,
-    // vamos confiar no mecanismo interno do Framer para fazer o upsert
-    // baseado no campo "id" que estamos fornecendo
-
-    // Map vazio como fallback
-    const existingItemsMap = new Map();
-    
     // Prepara os itens para adicionar à coleção
-    const collectionItems = data.map(item => {
+    console.log('Preparando itens para adicionar à coleção...');
+    const collectionItems = data.map((item, index) => {
       // Usa o ID já definido (baseado na chave primária)
       const itemId = item.id || `item_${Math.random().toString(36).substring(2, 15)}`;
       
-      // Define um slug para o item
+      // Define um slug para o item - importante para URLs amigáveis no Framer
       const slug = item.slug || slugify(item.title || item.name || itemId);
       
       // Constrói o objeto de dados do campo
@@ -575,9 +599,9 @@ export async function createOrUpdateFramerData(
       // Obtém os tipos de campo a partir dos campos configurados
       const fieldTypes = new Map(configuredFields.map(field => [field.id, field.type]));
       
-      Object.keys(item).forEach(key => {
+      for (const key of Object.keys(item)) {
         // Pula os campos especiais de ID
-        if (key === '_id' || key === 'id' || key === 'slug') return;
+        if (key === '_id' || key === 'id' || key === 'slug') continue;
         
         // Usa o mesmo padrão de ID que usamos ao definir os campos
         const fieldId = `field_${key.replace(/[^a-zA-Z0-9]/g, '_')}`;
@@ -586,33 +610,100 @@ export async function createOrUpdateFramerData(
         
         // O Framer espera um formato específico para cada tipo de campo
         // Encapsula o valor conforme o tipo do campo
-        switch (fieldType) {
-          case 'string':
-            fieldData[fieldId] = String(value);
-            break;
-          case 'number':
-            fieldData[fieldId] = Number(value);
-            break;
-          case 'boolean':
-            fieldData[fieldId] = Boolean(value);
-            break;
-          case 'date':
-            fieldData[fieldId] = value instanceof Date ? value.toISOString() : String(value);
-            break;
-          case 'image':
-            // Para URLs de imagem
-            fieldData[fieldId] = { url: String(value) };
-            break;
-          default:
-            // Fallback para string para outros tipos
-            fieldData[fieldId] = String(value);
+        try {
+          switch (fieldType) {
+            case 'string':
+              fieldData[fieldId] = value !== null && value !== undefined ? String(value) : '';
+              break;
+            case 'number':
+              if (value === null || value === undefined) {
+                fieldData[fieldId] = 0;
+              } else {
+                const num = Number(value);
+                fieldData[fieldId] = isNaN(num) ? 0 : num;
+              }
+              break;
+            case 'boolean':
+              fieldData[fieldId] = Boolean(value);
+              break;
+            case 'date':
+              if (value instanceof Date) {
+                fieldData[fieldId] = value.toISOString();
+              } else if (value === null || value === undefined) {
+                fieldData[fieldId] = null;
+              } else {
+                try {
+                  const date = new Date(value);
+                  fieldData[fieldId] = isNaN(date.getTime()) ? null : date.toISOString();
+                } catch (e) {
+                  console.warn(`Erro ao converter data para o campo ${key}:`, e);
+                  fieldData[fieldId] = null;
+                }
+              }
+              break;
+            case 'image':
+              // Para URLs de imagem
+              if (value === null || value === undefined) {
+                fieldData[fieldId] = null;
+              } else if (typeof value === 'string') {
+                fieldData[fieldId] = { url: value };
+              } else if (typeof value === 'object' && value !== null && 'url' in value) {
+                fieldData[fieldId] = value;
+              } else {
+                fieldData[fieldId] = { url: String(value) };
+              }
+              break;
+            case 'color':
+              // Para valores de cor
+              fieldData[fieldId] = value !== null && value !== undefined ? String(value) : '#000000';
+              break;
+            case 'formattedText':
+              // Para texto com formatação HTML
+              if (value === null || value === undefined) {
+                fieldData[fieldId] = '';
+              } else if (typeof value === 'string') {
+                fieldData[fieldId] = value;
+              } else {
+                fieldData[fieldId] = String(value);
+              }
+              break;
+            case 'object':
+              // Para objetos JSON
+              if (value === null || value === undefined) {
+                fieldData[fieldId] = {};
+              } else if (typeof value === 'object') {
+                // Se já for um objeto, use-o diretamente
+                fieldData[fieldId] = value;
+              } else if (typeof value === 'string') {
+                // Tenta fazer parse da string como JSON
+                try {
+                  fieldData[fieldId] = JSON.parse(value);
+                } catch (e) {
+                  console.warn(`Erro ao fazer parse JSON do campo ${key}:`, e);
+                  // Fallback para objeto com propriedade value
+                  fieldData[fieldId] = { value: value };
+                }
+              } else {
+                // Para outros tipos, cria um objeto com propriedade value
+                fieldData[fieldId] = { value: value };
+              }
+              break;
+            default:
+              // Fallback para string para outros tipos
+              fieldData[fieldId] = value !== null && value !== undefined ? String(value) : '';
+          }
+        } catch (e) {
+          console.warn(`Erro ao processar campo ${key} do item ${index}:`, e);
+          // Use um valor padrão para evitar falha na sincronização
+          fieldData[fieldId] = '';
         }
-      });
+      }
       
-      // Verifica se o item já existe na coleção
-      const isUpdate = existingItemsMap.has(itemId);
-      console.log(`Item ${itemId} será ${isUpdate ? 'atualizado' : 'criado'}`);
+      if (index === 0 || index === data.length - 1) {
+        console.log(`Item ${index + 1}/${data.length} preparado: id=${itemId}, slug=${slug}, campos=${Object.keys(fieldData).length}`);
+      }
       
+      // Retorna o objeto no formato esperado pelo Framer
       return {
         id: itemId,
         slug: slug,
@@ -622,7 +713,14 @@ export async function createOrUpdateFramerData(
     });
     
     // Adiciona os itens à coleção (o Framer fará upsert automaticamente)
-    await collection.addItems(collectionItems as any);
+    console.log(`Adicionando ${collectionItems.length} itens à coleção...`);
+    try {
+      await collection.addItems(collectionItems as any);
+      console.log('Itens adicionados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao adicionar itens:', error);
+      throw error;
+    }
     
     return {
       success: true,
@@ -636,7 +734,7 @@ export async function createOrUpdateFramerData(
     return {
       success: false,
       message: 'Erro ao criar/atualizar dados no Framer CMS',
-      error: error instanceof Error ? error.message : 'Erro desconhecido'
+      error: error instanceof Error ? error.message : String(error)
     };
   }
 }
@@ -729,6 +827,20 @@ function getFramerFieldType(value: any): string {
       if (/\.(pdf|doc|docx|xls|xlsx|txt|csv|zip|rar)$/i.test(value)) {
         return 'file';
       }
+      // Verifica se parece ser JSON
+      if ((value.startsWith('{') && value.endsWith('}')) || 
+          (value.startsWith('[') && value.endsWith(']'))) {
+        try {
+          const parsed = JSON.parse(value);
+          // Verifica se é um array ou objeto após o parse
+          if (Array.isArray(parsed)) {
+            return 'array';
+          }
+          return 'object';
+        } catch (e) {
+          // Se não for JSON válido, trata como string
+        }
+      }
       return 'string';
     case 'number':
       return 'number';
@@ -739,180 +851,120 @@ function getFramerFieldType(value: any): string {
         return 'date';
       }
       if (Array.isArray(value)) {
-        if (value.length > 0 && typeof value[0] === 'string' && value[0].includes('id')) {
-          return 'multiCollectionReference';
-        }
-        return 'string'; // Convertemos arrays para string por padrão
+        // Arrays são tratados como arrays no Framer
+        return 'array';
       }
-      // Se o objeto tem um campo id, pode ser uma referência
-      if (value.id || value._id || value.ref_id) {
-        return 'collectionReference';
-      }
-      return 'string'; // Objetos complexos são convertidos para string
+      // Para todos os outros objetos, incluindo JSON
+      return 'object';
     default:
       return 'string';
   }
 }
 
 /**
- * Executa a sincronização completa de dados do Supabase para o Framer CMS
+ * Prepara um valor para ser enviado ao Framer, garantindo compatibilidade
  */
-export async function syncDataToFramer(
-  config: SupabaseConfig,
-  table: TableInfo,
-  mappings: FieldMapping[],
-  options: SyncOptions = {}
-): Promise<SyncResult> {
-  try {
-    // Passo 1: Buscar dados do Supabase
-    const fetchResult = await fetchDataFromSupabase(config, table, options);
-    
-    if (!fetchResult.success) {
-      return {
-        success: false,
-        message: 'Falha ao buscar dados do Supabase',
-        error: fetchResult.error
-      };
-    }
-    
-    if (!fetchResult.data || fetchResult.data.length === 0) {
-      return {
-        success: true,
-        message: 'Nenhum dado encontrado para sincronizar',
-        data: [],
-        totalRecords: 0
-      };
-    }
-    
-    // Passo 2: Transformar os dados conforme mapeamento
-    const transformedData = transformData(fetchResult.data, mappings);
-    
-    if (!transformedData || transformedData.length === 0) {
-      return {
-        success: false,
-        message: 'Erro ao transformar dados',
-        error: 'Não foi possível converter os dados para o formato Framer'
-      };
-    }
-    
-    // Passo 3: Criar ou atualizar os dados no Framer
-    const name = createFramerName(table.name);
-    const result = await createOrUpdateFramerData(name, transformedData);
-    
-    return {
-      ...result,
-      totalRecords: fetchResult.count || transformedData.length
-    };
-  } catch (error) {
-    console.error('Erro durante sincronização:', error);
-    return {
-      success: false,
-      message: 'Erro durante processo de sincronização',
-      error: error instanceof Error ? error.message : 'Erro desconhecido'
-    };
+function prepareValueForFramer(value: any): any {
+  if (value === null || value === undefined) {
+    return '';
   }
+
+  if (typeof value === 'object') {
+    if (value instanceof Date) {
+      return value.toISOString();
+    } else if (Array.isArray(value)) {
+      // Converte arrays para formato compatível com o Framer
+      return JSON.stringify(value);
+    } else {
+      // Converte objetos para string JSON
+      try {
+        return JSON.stringify(value);
+      } catch (error) {
+        console.error('Erro ao converter objeto para JSON:', error);
+        return String(value);
+      }
+    }
+  }
+
+  return value;
 }
 
 /**
- * Executa uma sincronização rápida e automática do Supabase para o Framer
- * Não requer mapeamento manual de campos, mas usa a chave primária selecionada
+ * Função para sincronizar dados do Supabase para o Framer
  */
-export async function quickSyncDataToFramer(
-  config: SupabaseConfig,
-  table: TableInfo
+export async function syncDataToFramer(
+  sourceData: any[], 
+  collectionName: string,
+  fieldMappings: FieldMapping[]
 ): Promise<SyncResult> {
+  console.log('Iniciando sincronização para', collectionName);
+  
+  if (!sourceData || sourceData.length === 0) {
+    return {
+      success: false,
+      message: 'Nenhum dado para sincronizar',
+      error: 'Dados de origem vazios',
+      data: [],
+      collectionName,
+      totalRecords: 0
+    };
+  }
+
+  if (!fieldMappings || fieldMappings.length === 0) {
+    return {
+      success: false,
+      message: 'Nenhum mapeamento de campo definido',
+      error: 'Mapeamentos vazios',
+      data: [],
+      collectionName,
+      totalRecords: 0
+    };
+  }
+
   try {
-    console.log('Iniciando sincronização rápida para tabela:', table.name);
+    // Transformar dados de acordo com os mapeamentos
+    const transformedData = transformData(sourceData, fieldMappings);
     
-    // Verifica se a chave primária foi definida
-    if (!table.primaryKeyColumn) {
+    // Verifica se temos dados transformados
+    if (!transformedData || transformedData.length === 0) {
       return {
         success: false,
-        message: 'Chave primária não definida',
-        error: 'É necessário definir uma chave primária para sincronizar os dados'
-      };
-    }
-    
-    console.log(`Usando chave primária: ${table.primaryKeyColumn}`);
-    
-    // Passo 1: Buscar todos os dados do Supabase
-    const fetchResult = await fetchAllDataFromSupabase(config, table);
-    
-    if (!fetchResult.success) {
-      return {
-        success: false,
-        message: 'Falha ao buscar dados do Supabase',
-        error: fetchResult.error
-      };
-    }
-    
-    if (!fetchResult.data || fetchResult.data.length === 0) {
-      return {
-        success: true,
-        message: 'Nenhum dado encontrado para sincronizar',
+        message: 'Falha ao transformar dados',
+        error: 'Erro desconhecido na transformação',
         data: [],
+        collectionName,
         totalRecords: 0
       };
     }
-    
-    console.log(`Dados obtidos: ${fetchResult.data.length} registros`);
-    
-    // Passo 2: Gerar mapeamentos automáticos com base nos tipos dos dados
-    const columns = await getTableColumns(config, table.name);
-    const autoMappings = columns.map((column: ColumnInfo) => {
-      // Tenta inferir o tipo Framer baseado no tipo do Supabase e nome da coluna
-      const framerType = inferFramerTypeFromColumn(column);
+
+    // Preparar dados para o Framer
+    const preparedData = transformedData.map(item => {
+      const preparedItem: Record<string, any> = {};
       
-      return {
-        supabaseField: column.name,
-        framerField: column.name,
-        type: framerType as FieldType
-      };
-    });
-    
-    // Passo 3: Transformar os dados com os mapeamentos automáticos
-    const transformedData = transformData(fetchResult.data, autoMappings);
-    
-    console.log('Dados transformados com sucesso');
-    
-    // Passo 4: Enriquecer os dados com o ID baseado na chave primária
-    const dataWithIds = transformedData.map((item, index) => {
-      // Obtém o valor da chave primária
-      const pkValue = fetchResult.data?.[index]?.[table.primaryKeyColumn!];
-      
-      if (pkValue === undefined || pkValue === null) {
-        console.warn(`Registro com valor de chave primária nulo ou indefinido: ${JSON.stringify(item)}`);
+      for (const key in item) {
+        preparedItem[key] = prepareValueForFramer(item[key]);
       }
       
-      // Converte para string (o Framer espera que o ID seja string)
-      const id = pkValue !== undefined && pkValue !== null ? String(pkValue) : `auto_${Math.random().toString(36).substring(2, 15)}`;
-      
-      // Gera um slug a partir do título, se existir, ou do ID
-      const title = item.title || item.name || pkValue || id;
-      const slug = slugify(title);
-      
-      return {
-        ...item,
-        _id: id, // Armazenamos o ID original como _id para uso interno
-        id: id,   // Usamos o valor da chave primária como ID no Framer
-        slug     // Adicionando o slug ao objeto retornado
-      };
+      return preparedItem;
     });
-    
-    // Passo 5: Criar ou atualizar os dados no Framer
-    const name = createFramerName(table.name);
-    const result = await createOrUpdateFramerData(name, dataWithIds);
+
+    // Enviar dados transformados para o Framer
+    const result = await createOrUpdateFramerData(collectionName, preparedData);
     
     return {
       ...result,
-      totalRecords: fetchResult.count || dataWithIds.length
+      collectionName,
+      totalRecords: preparedData.length
     };
   } catch (error) {
-    console.error('Erro durante sincronização rápida:', error);
+    console.error('Erro na sincronização:', error);
     return {
       success: false,
-      message: 'Erro durante processo de sincronização rápida',
-      error: error instanceof Error ? error.message : 'Erro desconhecido'
+      message: 'Erro durante a sincronização',
+      error: error instanceof Error ? error.message : String(error),
+      data: [],
+      collectionName,
+      totalRecords: 0
     };
   }
 }
@@ -961,77 +1013,6 @@ export function formatLastSyncTime(date?: Date): string {
   
   // Formatação padrão para datas mais antigas
   return date.toLocaleString('pt-BR');
-}
-
-/**
- * Função para inferir o tipo Framer baseado nas informações da coluna
- */
-function inferFramerTypeFromColumn(column: ColumnInfo): string {
-  const name = column.name.toLowerCase();
-  const type = column.type.toLowerCase();
-  
-  // Inferências baseadas no nome da coluna
-  if (name.includes('color') || name.includes('cor') || 
-      name.endsWith('rgb') || name.endsWith('hex')) {
-    return 'color';
-  }
-  
-  if (name.includes('url') || name.includes('link') || 
-      name.includes('website') || name.includes('site')) {
-    return 'link';
-  }
-  
-  if (name.includes('image') || name.includes('imagem') || 
-      name.includes('photo') || name.includes('foto') || 
-      name.includes('picture') || name.endsWith('img')) {
-    return 'image';
-  }
-  
-  if (name.includes('file') || name.includes('arquivo') || 
-      name.includes('document') || name.includes('documento') || 
-      name.endsWith('pdf') || name.endsWith('doc')) {
-    return 'file';
-  }
-  
-  if (name.includes('html') || name.includes('formatted') || 
-      name.includes('rich_text') || name.includes('rich_content') || 
-      name.includes('texto_formatado')) {
-    return 'formattedText';
-  }
-  
-  if (name.includes('reference') || name.includes('referencia') || 
-      name.includes('ref_') || name.endsWith('_ref') || 
-      name.endsWith('_id')) {
-    return 'collectionReference';
-  }
-  
-  if (name.includes('references') || name.includes('refs') || 
-      name.includes('ids')) {
-    return 'multiCollectionReference';
-  }
-  
-  // Inferências baseadas no tipo PostgreSQL
-  if (type.includes('int') || type.includes('float') || 
-      type.includes('decimal') || type.includes('numeric') ||
-      type.includes('real') || type.includes('double')) {
-    return 'number';
-  }
-  
-  if (type.includes('bool')) {
-    return 'boolean';
-  }
-  
-  if (type.includes('date') || type.includes('time') || 
-      type.includes('timestamp')) {
-    return 'date';
-  }
-  
-  if (type.includes('enum')) {
-    return 'enum';
-  }
-  
-  // Padrão para tudo mais
-  return 'string';
 }
 
 /**
