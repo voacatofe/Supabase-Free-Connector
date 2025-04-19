@@ -172,7 +172,7 @@ export function validateMappings(
   }
 
   // Verifica cada mapeamento
-  mappings.forEach((mapping, index) => {
+  mappings.forEach((mapping) => {
     const column = columns.find(col => col.name === mapping.sourceField);
     
     // Verifica se a coluna existe

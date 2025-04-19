@@ -1,7 +1,6 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { TableInfo, SupabaseConfig } from '../types/supabase';
 import { FieldMapping } from '../types/framer';
-import { previewFieldValue, convertRecord } from './fieldMapper';
 import { framer } from '../services/framer';
 import { ColumnInfo, FieldType } from '../types';
 
@@ -1060,7 +1059,7 @@ export async function getTableColumns(
   }
 }
 
-function processMapping(mapping: Record<string, unknown>): Record<string, string> {
+export function processMapping(mapping: Record<string, unknown>): Record<string, string> {
   return Object.entries(mapping).reduce((acc, [key, value]) => {
     acc[key] = String(value ?? '');
     return acc;
@@ -1096,7 +1095,7 @@ function handleSupabaseError(error: unknown): SupabaseError {
   return createSupabaseError('Um erro desconhecido ocorreu', 'Erro não identificado');
 }
 
-async function sync(options: SyncOptions): Promise<SyncResult> {
+export async function sync(options: SyncOptions): Promise<SyncResult> {
   if (!options || !options.table || !options.mapping) {
     return {
       success: false,
